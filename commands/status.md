@@ -1,9 +1,6 @@
 ---
-name: status
 description: Show active claude-guard protections, categories, and pattern counts
-allowed-tools:
-  - Read
-  - Bash
+allowed-tools: Read, Bash(*)
 argument-hint: "[category]"
 ---
 
