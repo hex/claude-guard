@@ -47,3 +47,7 @@ def allowlist_rules():
 def load_all():
     """Import all pack modules to trigger registration."""
     from guard.packs import core  # noqa: F401
+    from guard.packs import cloud  # noqa: F401
+    from guard.packs import infra  # noqa: F401
+    from guard.packs import cicd  # noqa: F401
+    from guard.packs import dns  # noqa: F401
