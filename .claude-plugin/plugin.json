@@ -1,6 +1,6 @@
 {
   "name": "claude-guard",
-  "version": "2026.2.1",
+  "version": "2026.2.2",
   "description": "Safety guardian that prevents Claude Code from executing dangerous commands, exposing secrets, and performing destructive operations",
   "author": {
     "name": "hex",
