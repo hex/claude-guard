@@ -1,26 +1,29 @@
 {
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PLUGIN_ROOT/hooks/scripts/command-guard.py",
-          "timeout": 5
-        }
-      ]
-    }
-  ],
-  "PostToolUse": [
-    {
-      "matcher": "Write|Edit|MultiEdit",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "bash $CLAUDE_PLUGIN_ROOT/hooks/scripts/credential-scanner.sh",
-          "timeout": 5
-        }
-      ]
-    }
-  ]
+  "description": "Safety guardian hooks that block dangerous commands and scan for credential exposure",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/scripts/command-guard.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/credential-scanner.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
 }
