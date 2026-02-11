@@ -82,15 +82,32 @@ The plugin activates automatically — no configuration needed. Hooks intercept 
 | Component | Type | Purpose |
 |---|---|---|
 | `command-guard.py` | PreToolUse hook | Blocks dangerous Bash commands (Tier 1 + 2) |
-| `credential-scanner.sh` | PostToolUse hook | Warns about credential exposure (Tier 3) |
+| `credential-scanner.py` | PostToolUse hook | Warns about credential exposure (Tier 3) |
+| `guard/packs/core.py` | Pattern pack | Filesystem, git, docker, k8s, database patterns |
+| `guard/packs/credentials.py` | Pattern pack | Credential and SQL detection patterns |
 | `guard-rules` | Skill | Teaches Claude the safety rules proactively |
 | `status` | Command | Shows active protections |
 
+## Architecture
+
+Patterns are organized into auditable pack modules under `hooks/scripts/guard/packs/`. Each pack is a plain Python file with readable regex patterns — no compilation, no obfuscation. You can `cat` any file to see exactly what gets blocked.
+
+```
+hooks/scripts/
+├── command-guard.py         # PreToolUse entry point
+├── credential-scanner.py    # PostToolUse entry point
+└── guard/
+    ├── protocol.py          # JSON I/O shared by both hooks
+    └── packs/
+        ├── core.py          # T1/T2/allowlist patterns (git, fs, docker, k8s, db)
+        └── credentials.py   # Credential detection patterns
+```
+
 ## Requirements
 
-- `jq` (for JSON parsing in credential scanner)
-- `rg` (ripgrep, for pattern matching in credential scanner)
-- Python 3.6+ (for command guard)
+- Python 3.6+
+
+No other dependencies. The credential scanner uses Python's built-in `re` and `json` modules.
 
 ## Coexistence
 

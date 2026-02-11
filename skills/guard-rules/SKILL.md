@@ -136,8 +136,8 @@ When writing files that handle configuration or authentication:
 
 ## Source of Truth
 
-For the authoritative and up-to-date list of all patterns, read the hook scripts directly:
-- **Command guard patterns:** `$CLAUDE_PLUGIN_ROOT/hooks/scripts/command-guard.py`
-- **Credential scanner patterns:** `$CLAUDE_PLUGIN_ROOT/hooks/scripts/credential-scanner.sh`
+For the authoritative and up-to-date list of all patterns, read the pack files directly:
+- **Command guard patterns:** `$CLAUDE_PLUGIN_ROOT/hooks/scripts/guard/packs/core.py`
+- **Credential scanner patterns:** `$CLAUDE_PLUGIN_ROOT/hooks/scripts/guard/packs/credentials.py`
 
-The tables in this skill provide a quick reference, but the scripts are the definitive source if discrepancies arise.
+The tables in this skill provide a quick reference, but the pack files are the definitive source if discrepancies arise.

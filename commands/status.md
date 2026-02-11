@@ -10,7 +10,7 @@ Display the active protections provided by the claude-guard plugin. If an option
 
 ## Instructions
 
-Read the command guard script at `$CLAUDE_PLUGIN_ROOT/hooks/scripts/command-guard.py` and the credential scanner at `$CLAUDE_PLUGIN_ROOT/hooks/scripts/credential-scanner.sh` to extract the current protection rules.
+Read the pattern packs at `$CLAUDE_PLUGIN_ROOT/hooks/scripts/guard/packs/core.py` and `$CLAUDE_PLUGIN_ROOT/hooks/scripts/guard/packs/credentials.py` to extract the current protection rules.
 
 Present a summary organized by tier:
 
