@@ -1,7 +1,7 @@
 ---
 name: Guard Rules
 description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, terraform destroy, aws s3 rm, gh repo delete, Route53 delete, and credential exposure warnings after file writes.
-version: 2026.2.5
+version: 2026.2.11
 ---
 
 # Guard Rules
