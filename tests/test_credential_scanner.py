@@ -33,6 +33,14 @@ def run_scanner(tool_name: str, file_path: str) -> dict | None:
     return None
 
 
+def get_context(result: dict | None) -> str:
+    """Extract additionalContext from hookSpecificOutput wrapper."""
+    if not result:
+        return ""
+    hook_output = result.get("hookSpecificOutput", {})
+    return hook_output.get("additionalContext", "")
+
+
 def write_temp_file(content: str, suffix: str = ".py") -> str:
     """Write content to a temp file and return its path."""
     f = tempfile.NamedTemporaryFile(mode="w", suffix=suffix, delete=False)
@@ -64,7 +72,7 @@ class TestCredentialDetection(unittest.TestCase):
     def _assert_warns(self, content: str, expected_fragment: str, suffix: str = ".py"):
         result = self._scan(content, suffix)
         self.assertIsNotNone(result, f"Expected warning for content with {expected_fragment}")
-        ctx = result.get("additionalContext", "")
+        ctx = get_context(result)
         self.assertIn(expected_fragment, ctx, f"Expected '{expected_fragment}' in: {ctx}")
 
     def _assert_no_warning(self, content: str, suffix: str = ".py"):
@@ -157,7 +165,7 @@ class TestSQLDetection(unittest.TestCase):
     def _assert_warns(self, content: str, expected_fragment: str, suffix: str = ".sql"):
         result = self._scan(content, suffix)
         self.assertIsNotNone(result, f"Expected warning for SQL: {content[:50]}")
-        ctx = result.get("additionalContext", "")
+        ctx = get_context(result)
         self.assertIn(expected_fragment, ctx, f"Expected '{expected_fragment}' in: {ctx}")
 
     def test_drop_table(self):
@@ -177,7 +185,7 @@ class TestSQLDetection(unittest.TestCase):
         try:
             result = run_scanner("Write", path)
             if result:
-                ctx = result.get("additionalContext", "")
+                ctx = get_context(result)
                 self.assertNotIn("DELETE FROM without WHERE", ctx)
         finally:
             os.unlink(path)
@@ -188,7 +196,7 @@ class TestSQLDetection(unittest.TestCase):
         try:
             result = run_scanner("Write", path)
             if result:
-                ctx = result.get("additionalContext", "")
+                ctx = get_context(result)
                 self.assertNotIn("DROP", ctx)
         finally:
             os.unlink(path)
@@ -239,7 +247,7 @@ class TestFalsePositiveSuppression(unittest.TestCase):
             'secret = "longfakesecretvalue"'
         )
         if result:
-            ctx = result.get("additionalContext", "")
+            ctx = get_context(result)
             self.assertNotIn("secret/token/password", ctx)
 
     def test_os_environ_suppresses_secret(self):
@@ -250,7 +258,7 @@ class TestFalsePositiveSuppression(unittest.TestCase):
             'password = "longfakepassword"'
         )
         if result:
-            ctx = result.get("additionalContext", "")
+            ctx = get_context(result)
             self.assertNotIn("secret/token/password", ctx)
 
     def test_connection_string_with_env_var_suppressed(self):
@@ -259,7 +267,7 @@ class TestFalsePositiveSuppression(unittest.TestCase):
             'DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost/db'
         )
         if result:
-            ctx = result.get("additionalContext", "")
+            ctx = get_context(result)
             self.assertNotIn("connection string", ctx)
 
 

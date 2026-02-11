@@ -28,7 +28,13 @@ def deny(reason: str) -> None:
 
 def warn(context: str) -> None:
     """Output a PostToolUse warning (additionalContext) and exit."""
-    print(json.dumps({"additionalContext": context}))
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": context,
+        }
+    }
+    print(json.dumps(output))
     sys.exit(0)
 
 

@@ -9,7 +9,7 @@ Scans files after Write/Edit/MultiEdit operations for:
   - Destructive SQL statements (DROP, TRUNCATE, DELETE without WHERE)
 
 Exit behavior:
-  - Exit 0 with additionalContext JSON = add warning context
+  - Exit 0 with hookSpecificOutput JSON = add warning context
   - Exit 0 with no output = file is clean
 """
 import os
