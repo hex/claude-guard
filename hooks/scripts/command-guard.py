@@ -21,6 +21,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from guard.protocol import read_input, deny, format_tier1, format_tier2
 from guard.packs import load_all, allowlist_rules, tier1_rules, tier2_rules
+from guard.normalize import normalize
+
+
+def matches(pattern, command: str, normalized: str) -> bool:
+    """Check if a pattern matches either the raw or normalized command."""
+    return pattern.search(command) or pattern.search(normalized)
 
 
 def main():
@@ -38,19 +44,21 @@ def main():
     # Load all pattern packs
     load_all()
 
+    normalized = normalize(command)
+
     # Allowlist check first — safe commands pass immediately
     for pattern in allowlist_rules():
-        if pattern.search(command):
+        if matches(pattern, command, normalized):
             sys.exit(0)
 
     # Tier 1: Hard deny — catastrophic, no escape
     for pattern, category, reason in tier1_rules():
-        if pattern.search(command):
+        if matches(pattern, command, normalized):
             deny(format_tier1(reason, command))
 
     # Tier 2: Deny + redirect — suggest safer alternative
     for pattern, category, reason, alternative in tier2_rules():
-        if pattern.search(command):
+        if matches(pattern, command, normalized):
             deny(format_tier2(reason, alternative, command))
 
     # Allow all other commands
