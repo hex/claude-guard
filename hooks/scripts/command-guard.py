@@ -59,14 +59,14 @@ TIER1_PATTERNS = [
         "disk",
         "fdisk modifies disk partition tables. This will NOT be executed."
     ),
-    # Database catastrophe
+    # Database catastrophe (case-insensitive: SQL keywords vary in case)
     (
-        r"DROP\s+DATABASE",
+        r"(?i)DROP\s+DATABASE",
         "database",
         "DROP DATABASE destroys an entire database. This will NOT be executed."
     ),
     (
-        r"DROP\s+SCHEMA",
+        r"(?i)DROP\s+SCHEMA",
         "database",
         "DROP SCHEMA destroys an entire schema. This will NOT be executed."
     ),
@@ -85,7 +85,7 @@ TIER1_PATTERNS = [
         "Deleting a Kubernetes namespace destroys all resources in it. This will NOT be executed."
     ),
     (
-        r"kubectl\s+delete\s+--all",
+        r"kubectl\s+delete\s+.*--all",
         "kubernetes",
         "kubectl delete --all removes all resources of that type. This will NOT be executed."
     ),
@@ -245,21 +245,21 @@ TIER2_PATTERNS = [
         "chmod 777 makes files world-readable, writable, and executable.",
         "Use specific permissions: 755 for directories, 644 for files."
     ),
-    # Database operations via CLI (non-catastrophic but dangerous)
+    # Database operations via CLI (case-insensitive: SQL keywords vary in case)
     (
-        r"DROP\s+TABLE",
+        r"(?i)DROP\s+TABLE",
         "database",
         "DROP TABLE permanently removes a table and its data.",
         "Add IF EXISTS and confirm the table name with the user first."
     ),
     (
-        r"TRUNCATE\s+",
+        r"(?i)TRUNCATE\s+",
         "database",
         "TRUNCATE removes all rows from a table.",
         "Use DELETE with a WHERE clause for targeted removal, or confirm with the user."
     ),
     (
-        r"DELETE\s+FROM\s+\w+\s*;|DELETE\s+FROM\s+\w+\s*$",
+        r"(?i)DELETE\s+FROM\s+\w+\s*(?:;|$)",
         "database",
         "DELETE FROM without WHERE removes all rows.",
         "Add a WHERE clause, or confirm with the user that all rows should be deleted."
@@ -310,9 +310,9 @@ SAFE_PATTERNS = [
     r"docker\s+system\s+prune\s+.*--dry-run",
     # kubectl dry runs
     r"kubectl\s+delete\s+.*--dry-run",
-    # Database safe patterns
-    r"DROP\s+TABLE\s+IF\s+EXISTS.*--.*test",   # Test migrations
-    r"CREATE\s+.*DROP",                         # CREATE OR REPLACE patterns
+    # Database safe patterns (case-insensitive: SQL keywords vary in case)
+    r"(?i)DROP\s+TABLE\s+IF\s+EXISTS.*--.*test",   # Test migrations
+    r"(?i)CREATE\s+.*DROP",                         # CREATE OR REPLACE patterns
 ]
 
 
@@ -364,17 +364,17 @@ def main():
 
     # Allowlist check first — safe commands pass immediately
     for pattern in SAFE_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
+        if re.search(pattern, command):
             sys.exit(0)
 
     # Tier 1: Hard deny — catastrophic, no escape
     for pattern, category, reason in TIER1_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
+        if re.search(pattern, command):
             deny(format_tier1_deny(reason, command))
 
     # Tier 2: Deny + redirect — suggest safer alternative
     for pattern, category, reason, alternative in TIER2_PATTERNS:
-        if re.search(pattern, command, re.IGNORECASE):
+        if re.search(pattern, command):
             deny(format_tier2_deny(reason, alternative, command))
 
     # Allow all other commands
