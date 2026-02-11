@@ -329,12 +329,17 @@ def deny(reason: str) -> None:
     sys.exit(0)
 
 
+SEPARATOR = "\u2500" * 49
+
+
 def format_tier1_deny(reason: str, command: str) -> str:
     """Format a Tier 1 hard deny message."""
     return (
-        f"BLOCKED by claude-guard (Tier 1: Hard Deny)\n\n"
-        f"Reason: {reason}\n\n"
+        f"\U0001f534 BLOCKED by claude-guard (Tier 1: Hard Deny)\n\n"
         f"Command: {command}\n\n"
+        f"{SEPARATOR}\n"
+        f"{reason}\n"
+        f"{SEPARATOR}\n\n"
         f"This command must be run manually by the user if truly needed."
     )
 
@@ -342,9 +347,11 @@ def format_tier1_deny(reason: str, command: str) -> str:
 def format_tier2_deny(reason: str, alternative: str, command: str) -> str:
     """Format a Tier 2 deny + redirect message."""
     return (
-        f"BLOCKED by claude-guard (Tier 2: Safer Alternative Available)\n\n"
-        f"Reason: {reason}\n\n"
+        f"\U0001f6e1\ufe0f BLOCKED by claude-guard (Tier 2: Safer Alternative Available)\n\n"
         f"Command: {command}\n\n"
+        f"{SEPARATOR}\n"
+        f"{reason}\n"
+        f"{SEPARATOR}\n\n"
         f"Alternative: {alternative}"
     )
 
