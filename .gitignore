@@ -1,0 +1,17 @@
+# Local settings
+.claude/*.local.md
+
+# Session data
+.cs/
+
+# OS files
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor files
+*.swp
+*.swo
+*~
