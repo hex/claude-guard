@@ -44,11 +44,11 @@ def run_guard(command: str, explain: bool = False) -> tuple[dict | None, str]:
 
 
 class TestExplainDisabled(unittest.TestCase):
-    """When explain is off, stderr must be empty."""
+    """When explain is off, no pipeline trace on stderr (deny reasons still appear)."""
 
-    def test_denied_command_no_stderr(self):
+    def test_denied_command_shows_reason_on_stderr(self):
         _, stderr = run_guard("rm -rf /", explain=False)
-        self.assertEqual(stderr, "")
+        self.assertIn("BLOCKED by claude-guard", stderr)
 
     def test_allowed_command_no_stderr(self):
         _, stderr = run_guard("git status", explain=False)

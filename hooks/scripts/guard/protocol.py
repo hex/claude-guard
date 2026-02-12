@@ -15,6 +15,7 @@ def read_input() -> dict:
 
 def deny(reason: str) -> None:
     """Output a PreToolUse deny decision and exit."""
+    print(reason, file=sys.stderr)
     output = {
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
