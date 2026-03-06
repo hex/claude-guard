@@ -91,5 +91,24 @@ class TestWhitespaceNormalization(unittest.TestCase):
         assert_denied(self, "git\tpush\t--force\torigin\tmain")
 
 
+class TestGitConfigPrefix(unittest.TestCase):
+    """git -c key=value config overrides should not bypass patterns."""
+
+    def test_git_c_push_force(self):
+        assert_denied(self, "git -c user.name=x push --force origin main")
+
+    def test_git_c_multiple_configs(self):
+        assert_denied(self, "git -c user.name=x -c user.email=y push --force origin")
+
+    def test_git_c_reset_hard(self):
+        assert_denied(self, "git -c core.autocrlf=false reset --hard HEAD")
+
+    def test_git_c_safe_command(self):
+        assert_allowed(self, "git -c core.autocrlf=true status")
+
+    def test_git_c_force_with_lease_allowed(self):
+        assert_allowed(self, "git -c user.name=x push --force-with-lease origin")
+
+
 if __name__ == "__main__":
     unittest.main()

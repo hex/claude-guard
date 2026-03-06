@@ -33,6 +33,12 @@ _PIPE_TO_SHELL = re.compile(
     r'\|\s*(?:bash|sh|zsh|dash)\s*(?:$|;|&&|\|\|)'
 )
 
+# Process substitution with network download: shell <(curl/wget ...)
+# Executes arbitrary remote code, functionally identical to pipe-to-shell
+_PROCESS_SUB_DOWNLOAD = re.compile(
+    r'(?:bash|sh|zsh|dash|source|\.)\s+<\(.*(?:curl|wget)\s'
+)
+
 # Inline interpreter patterns: python -c, ruby -e, perl -e, node -e
 _INTERPRETER_BRIDGE = re.compile(
     r'(?:python3?|python2|ruby|perl|node)\s+(?:-c|-e)\s+'
@@ -204,6 +210,10 @@ def check_execution_bridges(command: str) -> tuple[bool, str] | None:
     # Pipe to shell: always dangerous (we can't know what's piped)
     if _PIPE_TO_SHELL.search(command):
         return (True, "Piping output to a shell interpreter executes arbitrary code.")
+
+    # Process substitution with download: shell <(curl/wget ...) executes remote code
+    if _PROCESS_SUB_DOWNLOAD.search(command):
+        return (True, "Process substitution with network download executes arbitrary remote code.")
 
     # Check inline interpreters for language-specific destructive patterns
     for match in _INTERPRETER_BRIDGE.finditer(command):

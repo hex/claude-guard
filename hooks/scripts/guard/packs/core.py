@@ -253,6 +253,14 @@ register_tier2(
     "Use 'docker rmi' without --force for safe removal.",
 )
 
+# Destructive move to /dev/null
+register_tier2(
+    r"mv\s+\S+\s+/dev/null",
+    "filesystem",
+    "Moving files or directories to /dev/null destroys them.",
+    "Use 'rm' with confirmation, or move to a backup location instead.",
+)
+
 # Permission escalation
 register_tier2(
     r"chmod\s+777\b|chmod\s+-R\s+777\b|chmod\s+.*777\b",

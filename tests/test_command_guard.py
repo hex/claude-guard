@@ -228,6 +228,31 @@ class TestSafeCommands(unittest.TestCase):
         assert_allowed(self, "echo hello")
 
 
+class TestDestructiveMove(unittest.TestCase):
+    """Destructive mv operations should be blocked."""
+
+    def test_mv_root_to_dev_null(self):
+        assert_denied(self, "mv / /dev/null")
+
+    def test_mv_home_to_dev_null(self):
+        assert_denied(self, "mv ~ /dev/null")
+
+    def test_mv_home_var_to_dev_null(self):
+        assert_denied(self, "mv $HOME /dev/null")
+
+    def test_mv_path_to_dev_null(self):
+        assert_denied(self, "mv /var/data /dev/null")
+
+    def test_mv_normal_rename_allowed(self):
+        assert_allowed(self, "mv file.txt file.bak")
+
+    def test_mv_directory_rename_allowed(self):
+        assert_allowed(self, "mv old-name/ new-name/")
+
+    def test_mv_to_directory_allowed(self):
+        assert_allowed(self, "mv file.txt /tmp/")
+
+
 class TestNonBashTools(unittest.TestCase):
     """Non-Bash tool invocations should pass through without checking."""
 

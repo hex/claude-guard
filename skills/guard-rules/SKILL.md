@@ -1,7 +1,7 @@
 ---
 name: Guard Rules
 description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, terraform destroy, aws s3 rm, gh repo delete, Route53 delete, and credential exposure warnings after file writes.
-version: 2026.2.11
+version: 2026.3.0
 ---
 
 # Guard Rules
@@ -48,6 +48,7 @@ Dangerous commands that have a safer alternative. When blocked at this tier, use
 | Blocked Command | Safe Alternative |
 |---|---|
 | `rm -rf <directory>` (also `rm -r -f`, `rm --recursive --force`) | List contents first, ask user to confirm |
+| `mv <path> /dev/null` | Use `rm` with confirmation, or move to backup location |
 | `chmod 777` | Use specific permissions (755, 644) |
 
 **Docker Operations:**
@@ -140,6 +141,7 @@ The guard uses context-aware matching to avoid false positives. Patterns are onl
 - **Variable assignments**: `MSG="git push --force"` is a variable assignment, not executed
 - **Comments**: Text after `#` is ignored
 - **Execution bridges**: `bash -c`, `eval`, `source`, `pipe | bash` — string arguments to these ARE matched because they will be executed
+- **Process substitution downloads**: `bash <(curl ...)`, `source <(wget ...)` — executes arbitrary remote code
 - **Inline interpreters**: `python -c`, `ruby -e`, `perl -e`, `node -e` with destructive patterns are blocked
 
 ## Command Normalization
@@ -149,6 +151,7 @@ Commands are normalized before matching to prevent evasion:
 - Path prefixes stripped: `/usr/bin/git` becomes `git`
 - Whitespace collapsed: `git   push   --force` becomes `git push --force`
 - `env` wrappers stripped: `env VAR=val git push --force` becomes `git push --force`
+- `git -c` config stripped: `git -c user.name=x push --force` becomes `git push --force`
 
 ## Allowlisted Safe Patterns
 
