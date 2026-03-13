@@ -14,8 +14,9 @@ _SAFE_WRAPPERS = {
     "test", "[",
 }
 
-# git subcommands where -m/--message arguments are data
-_GIT_MESSAGE_FLAGS = {"-m", "--message"}
+# Flags whose arguments are data, not code. Quoted strings following
+# these flags are blanked before pattern matching.
+_DATA_FLAGS = {"-m", "--message", "--notes", "--body", "--title"}
 
 # Execution bridges: commands that execute their string argument as code
 _SHELL_BRIDGES = re.compile(
@@ -131,8 +132,8 @@ def is_safe_wrapper_arg(command: str, region_start: int) -> bool:
     """
     preceding = _preceding_context(command, region_start)
 
-    # Check for git -m/--message flags
-    for flag in _GIT_MESSAGE_FLAGS:
+    # Check for data flags (-m, --message, --notes, --body, --title)
+    for flag in _DATA_FLAGS:
         if preceding.endswith(flag):
             return True
 

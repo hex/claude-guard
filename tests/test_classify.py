@@ -161,6 +161,23 @@ class TestProcessSubstitution(unittest.TestCase):
         assert_allowed(self, "cat <(echo hello)")
 
 
+class TestDataFlags(unittest.TestCase):
+    """Dangerous patterns in --notes/--body/--title args should be allowed."""
+
+    def test_gh_release_notes_drop_table(self):
+        assert_allowed(self, 'gh release create v1.0 --notes "covers DROP TABLE patterns"')
+
+    def test_gh_pr_body_rm_rf(self):
+        assert_allowed(self, 'gh pr create --title "fix" --body "removed rm -rf usage"')
+
+    def test_gh_release_title_safe(self):
+        assert_allowed(self, 'gh release create v1.0 --title "security fixes"')
+
+    def test_data_flag_does_not_protect_command(self):
+        """The gh command itself is still checked — only the flag arg is blanked."""
+        assert_denied(self, "gh repo delete my-org/my-repo")
+
+
 class TestDirectExecution(unittest.TestCase):
     """Direct dangerous commands should still be caught (no regression)."""
 

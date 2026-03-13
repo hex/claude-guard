@@ -345,4 +345,4 @@ register_allowlist(r"kubectl\s+delete\s+.*--dry-run")
 
 # Database safe patterns (case-insensitive: SQL keywords vary in case)
 register_allowlist(r"(?i)DROP\s+TABLE\s+IF\s+EXISTS.*--.*test")
-register_allowlist(r"(?i)CREATE\s+.*DROP")
+register_allowlist(r"(?i)CREATE\s+(?:OR\s+REPLACE\s+)?(?:TABLE|VIEW|INDEX)\s+.*DROP\s+(?:TABLE|VIEW|INDEX)\s+IF\s+EXISTS")

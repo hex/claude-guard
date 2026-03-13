@@ -1,7 +1,7 @@
 ---
 name: Guard Rules
 description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, terraform destroy, aws s3 rm, gh repo delete, Route53 delete, and credential exposure warnings after file writes.
-version: 2026.3.1
+version: 2026.3.2
 ---
 
 # Guard Rules
@@ -138,6 +138,7 @@ Detected after file writes. These do not block execution but add warning context
 The guard uses context-aware matching to avoid false positives. Patterns are only matched against executed code, not string data:
 
 - **Safe wrapper arguments**: Quoted strings in `echo`, `printf`, `grep`, `sed`, `awk`, `git commit -m`, etc. are treated as data and not matched
+- **Data flag arguments**: Quoted strings after `--notes`, `--body`, `--title`, `-m`, `--message` are treated as data (e.g., `gh release create --notes "covers DROP TABLE"` is safe)
 - **Variable assignments**: `MSG="git push --force"` is a variable assignment, not executed
 - **Comments**: Text after `#` is ignored
 - **Execution bridges**: `bash -c`, `eval`, `source`, `pipe | bash` — string arguments to these ARE matched because they will be executed
