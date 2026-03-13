@@ -39,6 +39,14 @@ def assert_denied(tc, command, msg=""):
     tc.assertEqual(decision, "deny", f"Expected deny for: {command}. {msg}")
 
 
+def assert_asks(tc, command, msg=""):
+    """Assert the command triggers a user confirmation prompt (Tier 2)."""
+    output = run_guard(command)
+    tc.assertIsNotNone(output, f"Expected ask for: {command}. {msg}")
+    decision = output["hookSpecificOutput"]["permissionDecision"]
+    tc.assertEqual(decision, "ask", f"Expected ask for: {command}. {msg}")
+
+
 def assert_allowed(tc, command, msg=""):
     output = run_guard(command)
     tc.assertIsNone(output, f"Expected allow for: {command}. Got: {output}. {msg}")
@@ -52,10 +60,10 @@ class TestCloudAWS(unittest.TestCase):
     """AWS CLI destructive operations."""
 
     def test_s3_rm_recursive(self):
-        assert_denied(self, "aws s3 rm s3://my-bucket --recursive")
+        assert_asks(self, "aws s3 rm s3://my-bucket --recursive")
 
     def test_s3_rb_force(self):
-        assert_denied(self, "aws s3 rb s3://my-bucket --force")
+        assert_asks(self, "aws s3 rb s3://my-bucket --force")
 
     def test_ec2_terminate(self):
         assert_denied(self, "aws ec2 terminate-instances --instance-ids i-1234")
@@ -83,13 +91,13 @@ class TestCloudGCP(unittest.TestCase):
     """GCP CLI destructive operations."""
 
     def test_compute_delete(self):
-        assert_denied(self, "gcloud compute instances delete my-vm")
+        assert_asks(self, "gcloud compute instances delete my-vm")
 
     def test_sql_delete(self):
-        assert_denied(self, "gcloud sql instances delete my-db")
+        assert_asks(self, "gcloud sql instances delete my-db")
 
     def test_storage_rm_recursive(self):
-        assert_denied(self, "gsutil rm -r gs://my-bucket")
+        assert_asks(self, "gsutil rm -r gs://my-bucket")
 
     def test_project_delete(self):
         assert_denied(self, "gcloud projects delete my-project")
@@ -105,16 +113,16 @@ class TestCloudAzure(unittest.TestCase):
     """Azure CLI destructive operations."""
 
     def test_group_delete(self):
-        assert_denied(self, "az group delete --name my-rg")
+        assert_asks(self, "az group delete --name my-rg")
 
     def test_vm_delete(self):
-        assert_denied(self, "az vm delete --name my-vm --resource-group rg")
+        assert_asks(self, "az vm delete --name my-vm --resource-group rg")
 
     def test_storage_delete(self):
-        assert_denied(self, "az storage account delete --name mystorage")
+        assert_asks(self, "az storage account delete --name mystorage")
 
     def test_sql_delete(self):
-        assert_denied(self, "az sql server delete --name myserver")
+        assert_asks(self, "az sql server delete --name myserver")
 
     def test_group_list_allowed(self):
         assert_allowed(self, "az group list")
@@ -134,19 +142,19 @@ class TestInfra(unittest.TestCase):
     """Infrastructure-as-code destructive operations."""
 
     def test_terraform_destroy(self):
-        assert_denied(self, "terraform destroy")
+        assert_asks(self, "terraform destroy")
 
     def test_terraform_destroy_auto_approve(self):
-        assert_denied(self, "terraform destroy -auto-approve")
+        assert_asks(self, "terraform destroy -auto-approve")
 
     def test_terraform_apply_destroy(self):
-        assert_denied(self, "terraform apply -destroy")
+        assert_asks(self, "terraform apply -destroy")
 
     def test_pulumi_destroy(self):
-        assert_denied(self, "pulumi destroy")
+        assert_asks(self, "pulumi destroy")
 
     def test_cdk_destroy(self):
-        assert_denied(self, "cdk destroy")
+        assert_asks(self, "cdk destroy")
 
     def test_terraform_plan_allowed(self):
         assert_allowed(self, "terraform plan")
@@ -178,10 +186,10 @@ class TestCICD(unittest.TestCase):
         assert_denied(self, "gh repo delete my-org/my-repo")
 
     def test_gh_release_delete(self):
-        assert_denied(self, "gh release delete v1.0.0")
+        assert_asks(self, "gh release delete v1.0.0")
 
     def test_gh_secret_delete(self):
-        assert_denied(self, "gh secret delete MY_SECRET")
+        assert_asks(self, "gh secret delete MY_SECRET")
 
     def test_gh_repo_create_allowed(self):
         assert_allowed(self, "gh repo create my-repo")
@@ -210,13 +218,13 @@ class TestDNS(unittest.TestCase):
         assert_denied(self, "aws route53 delete-hosted-zone --id Z1234")
 
     def test_route53_change_delete(self):
-        assert_denied(self, "aws route53 change-resource-record-sets --hosted-zone-id Z1234 --change-batch '{\"Changes\":[{\"Action\":\"DELETE\"'")
+        assert_asks(self, "aws route53 change-resource-record-sets --hosted-zone-id Z1234 --change-batch '{\"Changes\":[{\"Action\":\"DELETE\"'")
 
     def test_gcloud_dns_delete_zone(self):
-        assert_denied(self, "gcloud dns managed-zones delete my-zone")
+        assert_asks(self, "gcloud dns managed-zones delete my-zone")
 
     def test_az_dns_delete_zone(self):
-        assert_denied(self, "az network dns zone delete --name example.com")
+        assert_asks(self, "az network dns zone delete --name example.com")
 
     def test_route53_list_allowed(self):
         assert_allowed(self, "aws route53 list-hosted-zones")

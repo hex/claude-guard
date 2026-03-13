@@ -40,6 +40,14 @@ def assert_denied(test_case: unittest.TestCase, command: str, msg: str = ""):
     test_case.assertEqual(decision, "deny", f"Expected deny for: {command}. {msg}")
 
 
+def assert_asks(test_case: unittest.TestCase, command: str, msg: str = ""):
+    """Assert the command triggers a user confirmation prompt (Tier 2)."""
+    output = run_guard(command)
+    test_case.assertIsNotNone(output, f"Expected ask for: {command}")
+    decision = output["hookSpecificOutput"]["permissionDecision"]
+    test_case.assertEqual(decision, "ask", f"Expected ask for: {command}. {msg}")
+
+
 def assert_allowed(test_case: unittest.TestCase, command: str, msg: str = ""):
     """Assert the command is allowed by the guard."""
     output = run_guard(command)
@@ -86,89 +94,89 @@ class TestTier1HardDeny(unittest.TestCase):
         assert_denied(self, "kubectl delete pods --all")
 
 
-class TestTier2DenyRedirect(unittest.TestCase):
-    """Tier 2: Dangerous commands with safer alternatives."""
+class TestTier2AskConfirm(unittest.TestCase):
+    """Tier 2: Dangerous commands prompt user for confirmation."""
 
     def test_git_push_force(self):
-        assert_denied(self, "git push --force origin main")
+        assert_asks(self, "git push --force origin main")
 
     def test_git_push_f(self):
-        assert_denied(self, "git push -f origin main")
+        assert_asks(self, "git push -f origin main")
 
     def test_git_reset_hard(self):
-        assert_denied(self, "git reset --hard HEAD~1")
+        assert_asks(self, "git reset --hard HEAD~1")
 
     def test_git_reset_merge(self):
-        assert_denied(self, "git reset --merge HEAD~1")
+        assert_asks(self, "git reset --merge HEAD~1")
 
     def test_git_checkout_dot(self):
-        assert_denied(self, "git checkout -- .")
+        assert_asks(self, "git checkout -- .")
 
     def test_git_checkout_file(self):
-        assert_denied(self, "git checkout -- src/file.ts")
+        assert_asks(self, "git checkout -- src/file.ts")
 
     def test_git_restore_file(self):
-        assert_denied(self, "git restore src/file.ts")
+        assert_asks(self, "git restore src/file.ts")
 
     def test_git_clean_f(self):
-        assert_denied(self, "git clean -fd")
+        assert_asks(self, "git clean -fd")
 
     def test_git_branch_force_delete(self):
-        assert_denied(self, "git branch -D feature/old")
+        assert_asks(self, "git branch -D feature/old")
 
     def test_git_stash_drop(self):
-        assert_denied(self, "git stash drop stash@{0}")
+        assert_asks(self, "git stash drop stash@{0}")
 
     def test_git_stash_clear(self):
-        assert_denied(self, "git stash clear")
+        assert_asks(self, "git stash clear")
 
     def test_git_commit_no_verify(self):
-        assert_denied(self, "git commit --no-verify -m test")
+        assert_asks(self, "git commit --no-verify -m test")
 
     def test_rm_rf_build(self):
-        assert_denied(self, "rm -rf ./build")
+        assert_asks(self, "rm -rf ./build")
 
     def test_docker_system_prune(self):
-        assert_denied(self, "docker system prune -a")
+        assert_asks(self, "docker system prune -a")
 
     def test_docker_rm_force(self):
-        assert_denied(self, "docker rm -f mycontainer")
+        assert_asks(self, "docker rm -f mycontainer")
 
     def test_docker_volume_rm(self):
-        assert_denied(self, "docker volume rm data_vol")
+        assert_asks(self, "docker volume rm data_vol")
 
     def test_docker_network_rm(self):
-        assert_denied(self, "docker network rm mynet")
+        assert_asks(self, "docker network rm mynet")
 
     def test_docker_compose_down_v(self):
-        assert_denied(self, "docker compose down -v")
+        assert_asks(self, "docker compose down -v")
 
     def test_docker_rmi_force(self):
-        assert_denied(self, "docker rmi -f myimage")
+        assert_asks(self, "docker rmi -f myimage")
 
     def test_chmod_777(self):
-        assert_denied(self, "chmod 777 /var/www")
+        assert_asks(self, "chmod 777 /var/www")
 
     def test_drop_table_upper(self):
-        assert_denied(self, "psql -c 'DROP TABLE users'")
+        assert_asks(self, "psql -c 'DROP TABLE users'")
 
     def test_drop_table_lower(self):
-        assert_denied(self, "psql -c 'drop table users'")
+        assert_asks(self, "psql -c 'drop table users'")
 
     def test_truncate_upper(self):
-        assert_denied(self, "mysql -e 'TRUNCATE users'")
+        assert_asks(self, "mysql -e 'TRUNCATE users'")
 
     def test_truncate_lower(self):
-        assert_denied(self, "mysql -e 'truncate users'")
+        assert_asks(self, "mysql -e 'truncate users'")
 
     def test_delete_without_where_upper(self):
-        assert_denied(self, "psql -c 'DELETE FROM users;'")
+        assert_asks(self, "psql -c 'DELETE FROM users;'")
 
     def test_delete_without_where_lower(self):
-        assert_denied(self, "psql -c 'delete from users;'")
+        assert_asks(self, "psql -c 'delete from users;'")
 
     def test_kubectl_delete_pod(self):
-        assert_denied(self, "kubectl delete pod my-pod")
+        assert_asks(self, "kubectl delete pod my-pod")
 
 
 class TestAllowlist(unittest.TestCase):
@@ -206,7 +214,7 @@ class TestCaseSensitivity(unittest.TestCase):
         assert_allowed(self, "git branch -d feature/old")
 
     def test_git_branch_uppercase_D_blocked(self):
-        assert_denied(self, "git branch -D feature/old")
+        assert_asks(self, "git branch -D feature/old")
 
 
 class TestSafeCommands(unittest.TestCase):
@@ -232,16 +240,16 @@ class TestDestructiveMove(unittest.TestCase):
     """Destructive mv operations should be blocked."""
 
     def test_mv_root_to_dev_null(self):
-        assert_denied(self, "mv / /dev/null")
+        assert_asks(self, "mv / /dev/null")
 
     def test_mv_home_to_dev_null(self):
-        assert_denied(self, "mv ~ /dev/null")
+        assert_asks(self, "mv ~ /dev/null")
 
     def test_mv_home_var_to_dev_null(self):
-        assert_denied(self, "mv $HOME /dev/null")
+        assert_asks(self, "mv $HOME /dev/null")
 
     def test_mv_path_to_dev_null(self):
-        assert_denied(self, "mv /var/data /dev/null")
+        assert_asks(self, "mv /var/data /dev/null")
 
     def test_mv_normal_rename_allowed(self):
         assert_allowed(self, "mv file.txt file.bak")

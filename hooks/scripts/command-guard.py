@@ -21,7 +21,7 @@ import sys
 # Add scripts directory to path so guard package is importable
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from guard.protocol import read_input, deny, format_tier1, format_tier2
+from guard.protocol import read_input, deny, ask, format_tier1, format_tier2
 from guard.packs import load_all, allowlist_rules, tier1_rules, tier2_rules
 from guard.normalize import normalize
 from guard.classify import get_effective_command, check_execution_bridges
@@ -97,7 +97,7 @@ def main():
         if matches(pattern, effective, effective_norm):
             trace("tier 2", f"Matched [{category}]: {pattern.pattern}")
             trace("result", f"DENY (Tier 2): {reason}")
-            deny(format_tier2(reason, alternative, command))
+            ask(format_tier2(reason, alternative, command))
 
     # Allow all other commands
     trace("result", "ALLOW (no patterns matched)")

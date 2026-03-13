@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ABOUTME: JSON protocol for Claude Code hook I/O.
-# ABOUTME: Reads HookInput from stdin, writes deny/warn responses to stdout.
+# ABOUTME: Reads HookInput from stdin, writes deny/ask/warn responses to stdout.
 import json
 import sys
 
@@ -20,6 +20,20 @@ def deny(reason: str) -> None:
         "hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }
+    print(json.dumps(output))
+    sys.exit(0)
+
+
+def ask(reason: str) -> None:
+    """Output a PreToolUse ask decision (user confirmation prompt) and exit."""
+    print(reason, file=sys.stderr)
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "ask",
             "permissionDecisionReason": reason,
         }
     }
@@ -55,9 +69,9 @@ def format_tier1(reason: str, command: str) -> str:
 
 
 def format_tier2(reason: str, alternative: str, command: str) -> str:
-    """Format a Tier 2 deny + redirect message."""
+    """Format a Tier 2 user confirmation prompt message."""
     return (
-        f"\U0001f6e1\ufe0f BLOCKED by claude-guard (Tier 2: Safer Alternative Available)\n\n"
+        f"\U0001f6e1\ufe0f claude-guard (Tier 2: Confirm Dangerous Command)\n\n"
         f"Command: {command}\n\n"
         f"{SEPARATOR}\n"
         f"{reason}\n"
