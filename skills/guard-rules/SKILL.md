@@ -1,7 +1,7 @@
 ---
 name: Guard Rules
 description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, terraform destroy, aws s3 rm, gh repo delete, Route53 delete, and credential exposure warnings after file writes.
-version: 2026.3.0
+version: 2026.3.1
 ---
 
 # Guard Rules
@@ -24,9 +24,9 @@ Catastrophic, irreversible commands that must never be executed by an AI agent. 
 - GitHub CLI catastrophe: `gh repo delete`
 - DNS catastrophe: `aws route53 delete-hosted-zone`
 
-### Tier 2: Deny + Redirect
+### Tier 2: Confirm with User
 
-Dangerous commands that have a safer alternative. When blocked at this tier, use the suggested alternative immediately instead of asking the user to run the original command.
+Dangerous commands that have a safer alternative. The user is prompted for confirmation before execution. If the user approves, the command proceeds. If denied, suggest the safer alternative listed below.
 
 **Git Operations:**
 
@@ -170,11 +170,11 @@ The following commands are always permitted, even if they partially match a bloc
 
 ## Working Within Guard Boundaries
 
-### When a Command is Blocked
+### When a Command is Caught
 
-1. Read the block message — it specifies the tier and reason
-2. For Tier 1: Inform the user and do not retry or work around the block
-3. For Tier 2: Use the suggested alternative command immediately
+1. Read the guard message — it specifies the tier and reason
+2. For Tier 1: The command is hard-blocked. Inform the user and do not retry or work around the block
+3. For Tier 2: The user sees a confirmation prompt. If they approve, the command proceeds. If they deny, use the suggested alternative
 4. Never attempt to bypass the guard by reformulating the command
 
 ### Preventing Blocks Proactively
