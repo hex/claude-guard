@@ -185,6 +185,50 @@ register_tier2(
     "Remove --no-verify and fix any hook failures instead.",
 )
 
+# Discard working-tree changes without -- (sibling of 'git checkout -- .')
+register_tier2(
+    r"git\s+checkout\s+\.(?:/|\s|$)",
+    "git",
+    "git checkout . discards all uncommitted changes in the working tree.",
+    "Use 'git stash' to save changes, or 'git diff' to review first.",
+)
+
+# Git history rewriting and ref destruction
+register_tier2(
+    r"git\s+filter-branch\b",
+    "git",
+    "git filter-branch rewrites the entire repository history.",
+    "Confirm the rewrite is intended and work on a backup clone first.",
+)
+
+register_tier2(
+    r"git\s+reflog\s+expire\b",
+    "git",
+    "git reflog expire discards the reflog that makes recent operations recoverable.",
+    "Avoid expiring the reflog unless you intend to make recent operations unrecoverable.",
+)
+
+register_tier2(
+    r"git\s+gc\s+.*--prune=(?:now|all)\b",
+    "git",
+    "git gc --prune=now permanently removes unreachable objects.",
+    "Use plain 'git gc' to keep the default grace period.",
+)
+
+register_tier2(
+    r"git\s+update-ref\s+-d\b",
+    "git",
+    "git update-ref -d deletes a ref directly, bypassing branch-delete safety.",
+    "Use 'git branch -d' so merge status is checked first.",
+)
+
+register_tier2(
+    r"git\s+push\s+.*--mirror\b",
+    "git",
+    "git push --mirror overwrites ALL remote refs to match local.",
+    "Push specific refs instead of mirroring the entire repository.",
+)
+
 # Recursive delete (non-root, non-tmp — caught after Tier 1 and allowlist)
 register_tier2(
     r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR]",
@@ -261,6 +305,29 @@ register_tier2(
     "Use 'rm' with confirmation, or move to a backup location instead.",
 )
 
+# Bulk delete via find (no rm token to match the rm rules above)
+register_tier2(
+    r"find\s+.*-delete\b",
+    "filesystem",
+    "find -delete recursively removes every matching file.",
+    "Run the find without -delete first to list what would be removed.",
+)
+
+register_tier2(
+    r"find\s+.*-exec\s+rm\b",
+    "filesystem",
+    "find -exec rm deletes every matching file.",
+    "Run the find without -exec first to list what would be removed.",
+)
+
+# Unrecoverable file destruction
+register_tier2(
+    r"\bshred\s+\S",
+    "filesystem",
+    "shred overwrites a file so its contents cannot be recovered.",
+    "Confirm the target; use 'rm' if recoverability is acceptable.",
+)
+
 # Permission escalation
 register_tier2(
     r"chmod\s+777\b|chmod\s+-R\s+777\b|chmod\s+.*777\b",
@@ -297,6 +364,58 @@ register_tier2(
     "kubernetes",
     "kubectl delete removes Kubernetes resources.",
     "Use 'kubectl delete --dry-run=client' first to preview, and confirm with the user.",
+)
+
+register_tier2(
+    r"kubectl\s+drain\b",
+    "kubernetes",
+    "kubectl drain evicts all pods from a node.",
+    "Run 'kubectl get pods --field-selector spec.nodeName=<node>' first to review impact.",
+)
+
+# =============================================================================
+# Tier 2: Process, service, and scheduler control
+# =============================================================================
+
+register_tier2(
+    r"crontab\s+-r\b",
+    "scheduler",
+    "crontab -r deletes ALL cron jobs with no confirmation.",
+    "Run 'crontab -l' first to review, and back it up before removing.",
+)
+
+register_tier2(
+    r"\bkill\s+(?:-\S+\s+)?-1\b",
+    "process",
+    "kill -1 signals every process you own, ending the session.",
+    "Target a specific PID instead of -1.",
+)
+
+register_tier2(
+    r"systemctl\s+(?:stop|disable)\b",
+    "service",
+    "systemctl stop/disable takes a service down or prevents it starting at boot.",
+    "Confirm the service and environment; use 'systemctl status' to inspect first.",
+)
+
+# Recursive chmod/chown on a system path (project-relative paths are allowed)
+register_tier2(
+    r"(?:chmod|chown)\s+-R\b.*\s/(?:etc|usr|bin|sbin|var|lib|lib64|boot|root|sys)(?:/|\s|$)|"
+    r"(?:chmod|chown)\s+-R\b[^/]*\s/(?:\s|$)",
+    "permissions",
+    "Recursive chmod/chown on a system path can break the operating system.",
+    "Scope the recursion to a project directory, not a system path.",
+)
+
+# =============================================================================
+# Tier 2: Remote code execution via package installers (URL/VCS specs only)
+# =============================================================================
+
+register_tier2(
+    r"\bpip3?\s+install\s+(?:--?\S+\s+)*(?:https?://|git\+)",
+    "supply-chain",
+    "pip install from a URL or VCS runs setup code from an untrusted source.",
+    "Install from PyPI by name, or vet and pin the source first.",
 )
 
 # =============================================================================

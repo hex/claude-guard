@@ -40,6 +40,20 @@ register_tier2(
     "Run 'aws s3 ls <bucket>' first to review contents.",
 )
 
+register_tier2(
+    r"aws\s+s3api\s+delete-bucket\b",
+    "cloud",
+    "aws s3api delete-bucket deletes the bucket.",
+    "Run 'aws s3api list-objects --bucket <name>' first to confirm it is expendable.",
+)
+
+register_tier2(
+    r"aws\s+dynamodb\s+delete-table\b",
+    "cloud",
+    "aws dynamodb delete-table destroys the table and all its data.",
+    "Run 'aws dynamodb describe-table' first and confirm with the user.",
+)
+
 # Allowlist: safe AWS operations
 register_allowlist(r"aws\s+s3\s+rm\s+.*--dryrun")
 

@@ -25,3 +25,10 @@ register_tier2(
     "Deleting a secret removes it from the repository.",
     "Run 'gh secret list' first to review secrets.",
 )
+
+register_tier2(
+    r"gh\s+extension\s+install\b",
+    "cicd",
+    "gh extension install runs third-party extension code on your machine.",
+    "Review the extension's source before installing.",
+)

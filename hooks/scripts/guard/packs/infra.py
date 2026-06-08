@@ -20,6 +20,13 @@ register_tier2(
     "Run 'terraform plan -destroy' first to preview what would be destroyed.",
 )
 
+register_tier2(
+    r"terraform\s+apply\s+.*-auto-approve",
+    "infra",
+    "terraform apply -auto-approve applies the plan with no confirmation prompt.",
+    "Run 'terraform plan' and review, then apply without -auto-approve to confirm interactively.",
+)
+
 # =============================================================================
 # Pulumi
 # =============================================================================
@@ -40,4 +47,29 @@ register_tier2(
     "infra",
     "cdk destroy removes all CloudFormation stacks and their resources.",
     "Run 'cdk diff' first to review the current state.",
+)
+
+# =============================================================================
+# Orchestration / GitOps teardown
+# =============================================================================
+
+register_tier2(
+    r"helm\s+uninstall\b|helm\s+delete\b",
+    "infra",
+    "helm uninstall removes a release and all its Kubernetes resources.",
+    "Run 'helm list' first to review, and 'helm get manifest' to see what would be removed.",
+)
+
+register_tier2(
+    r"argocd\s+app\s+delete\b",
+    "infra",
+    "argocd app delete removes the application and its managed resources.",
+    "Run 'argocd app get' first to review what is managed.",
+)
+
+register_tier2(
+    r"flux\s+delete\b",
+    "infra",
+    "flux delete removes a Flux resource and what it reconciles.",
+    "Run 'flux get all' first to review.",
 )
