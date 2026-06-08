@@ -1,7 +1,7 @@
 ---
 name: Guard Rules
-description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, terraform destroy, aws s3 rm, gh repo delete, Route53 delete, and credential exposure warnings after file writes.
-version: 2026.3.2
+description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, kubectl drain, terraform destroy, terraform apply -auto-approve, aws s3 rm, gh repo delete, find -delete, git history rewrites, crontab -r, systemctl stop, helm uninstall, pip install from a URL, Route53 delete, and credential exposure warnings after file writes.
+version: 2026.6.0
 ---
 
 # Guard Rules
@@ -42,6 +42,9 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | `git stash drop/clear` | `git stash list` first |
 | `git commit --no-verify` | Remove flag, fix hook failures |
 | `git push --no-verify` | Remove flag, fix hook failures |
+| `git checkout .` / `git checkout <path>` | `git stash` or `git diff` first |
+| `git filter-branch`, `git reflog expire`, `git gc --prune=now` | Irreversible history rewrite/prune — confirm intent |
+| `git update-ref -d`, `git push --mirror` | Deletes/overwrites refs — confirm scope first |
 
 **Filesystem Operations:**
 
@@ -50,6 +53,17 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | `rm -rf <directory>` (also `rm -r -f`, `rm --recursive --force`) | List contents first, ask user to confirm |
 | `mv <path> /dev/null` | Use `rm` with confirmation, or move to backup location |
 | `chmod 777` | Use specific permissions (755, 644) |
+| `find ... -delete` / `find ... -exec rm` | Run the find without -delete first to review |
+| `shred <file>` | Use `rm` if recoverability is acceptable |
+
+**Process, Service & Scheduler:**
+
+| Blocked Command | Safe Alternative |
+|---|---|
+| `crontab -r` | `crontab -l` first; back up before removing |
+| `kill -1` / `kill -9 -1` | Target a specific PID, not -1 |
+| `systemctl stop` / `disable` | Confirm service/env; `systemctl status` first |
+| `chmod -R` / `chown -R` on a system path | Scope the recursion to a project directory |
 
 **Docker Operations:**
 
@@ -75,6 +89,7 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | Blocked Command | Safe Alternative |
 |---|---|
 | `kubectl delete <resource>` | `kubectl delete --dry-run=client` first |
+| `kubectl drain <node>` | Review affected pods first, confirm with user |
 
 **Cloud Operations (AWS/GCP/Azure):**
 
@@ -88,6 +103,8 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | `az vm delete` | List VMs first, confirm with user |
 | `az storage account delete` | List storage first, confirm with user |
 | `az sql server delete` | Verify server name, confirm with user |
+| `aws s3api delete-bucket` | `aws s3api list-objects` first |
+| `aws dynamodb delete-table` | `aws dynamodb describe-table` first |
 
 **Infrastructure as Code:**
 
@@ -97,6 +114,10 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | `terraform apply -destroy` | `terraform plan -destroy` first |
 | `pulumi destroy` | `pulumi preview --diff` first |
 | `cdk destroy` | `cdk diff` first |
+| `terraform apply -auto-approve` | `terraform plan`, then apply without -auto-approve |
+| `helm uninstall` | `helm list` / `helm get manifest` first |
+| `argocd app delete` | `argocd app get` first |
+| `flux delete` | `flux get all` first |
 
 **GitHub CLI:**
 
@@ -104,6 +125,13 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 |---|---|
 | `gh release delete` | `gh release list` first |
 | `gh secret delete` | `gh secret list` first |
+| `gh extension install` | Review the extension source before installing |
+
+**Supply Chain:**
+
+| Blocked Command | Safe Alternative |
+|---|---|
+| `pip install <url>` / `git+...` | Install from PyPI by name, or vet the source first |
 
 **DNS Operations:**
 
@@ -141,7 +169,8 @@ The guard uses context-aware matching to avoid false positives. Patterns are onl
 - **Data flag arguments**: Quoted strings after `--notes`, `--body`, `--title`, `-m`, `--message` are treated as data (e.g., `gh release create --notes "covers DROP TABLE"` is safe)
 - **Variable assignments**: `MSG="git push --force"` is a variable assignment, not executed
 - **Comments**: Text after `#` is ignored
-- **Execution bridges**: `bash -c`, `eval`, `source`, `pipe | bash` — string arguments to these ARE matched because they will be executed
+- **Execution bridges**: `bash -c`, `eval`, `source` — string arguments to these ARE matched because they will be executed
+- **Pipe-to-interpreter**: `... | bash`, `| bash -s`, `| sudo bash`, `| python3` (which read stdin as code) are blocked; piping *data* into a script file (`cat data | python3 app.py`) is allowed
 - **Process substitution downloads**: `bash <(curl ...)`, `source <(wget ...)` — executes arbitrary remote code
 - **Inline interpreters**: `python -c`, `ruby -e`, `perl -e`, `node -e` with destructive patterns are blocked
 
@@ -154,6 +183,10 @@ Commands are normalized before matching to prevent evasion:
 - `env` wrappers stripped: `env VAR=val git push --force` becomes `git push --force`
 - `git -c` config stripped: `git -c user.name=x push --force` becomes `git push --force`
 
+## Statement-Aware Evaluation
+
+The guard splits commands on `;`, `&&`, and `||` and evaluates each statement separately. An allowlisted statement (e.g. `git clean -n`) clears only itself — it cannot shield a dangerous one chained after it, so `git clean -n && rm -rf /` is still blocked. Tier 1 (catastrophic) patterns are matched against the whole command and can never be suppressed by the allowlist.
+
 ## Allowlisted Safe Patterns
 
 The following commands are always permitted, even if they partially match a blocked pattern:
@@ -163,7 +196,7 @@ The following commands are always permitted, even if they partially match a bloc
 - `git restore --staged` / `-S` (unstaging files, not modifying working tree)
 - `git clean -n` / `--dry-run` (previewing what would be removed)
 - `git push --force-with-lease` / `--force-if-includes`
-- `rm -rf /tmp/*`, `/var/tmp/*`, `$TMPDIR/*` (temp directory cleanup)
+- `rm -rf /tmp/*`, `/var/tmp/*`, `$TMPDIR/*` (temp cleanup — only when the temp path is the sole target and contains no `..` escape)
 - `docker system prune --dry-run`
 - `kubectl delete --dry-run`
 - `aws s3 rm --dryrun`, `aws ... --dry-run` (AWS dry run)

