@@ -1,4 +1,5 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "claude-guard",
   "version": "2026.3.2",
   "description": "Safety guardian that prevents Claude Code from executing dangerous commands, exposing secrets, and performing destructive operations",

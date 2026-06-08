@@ -169,7 +169,7 @@ hooks/scripts/
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.10+
 
 No other dependencies. All modules use Python's built-in `re` and `json` modules.
 

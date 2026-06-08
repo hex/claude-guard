@@ -18,16 +18,9 @@ _SAFE_WRAPPERS = {
 # these flags are blanked before pattern matching.
 _DATA_FLAGS = {"-m", "--message", "--notes", "--body", "--title"}
 
-# Execution bridges: commands that execute their string argument as code
-_SHELL_BRIDGES = re.compile(
-    r'(?:^|&&|\|\||;)\s*'           # command start
-    r'(?:bash|sh|zsh|dash)\s+-c\s+'  # shell -c
-)
-
-_EVAL_BRIDGE = re.compile(
-    r'(?:^|&&|\|\||;)\s*'  # command start
-    r'eval\s+'             # eval
-)
+# `bash -c "..."` and `eval "..."` are not matched here. Because bash/sh/eval are
+# not safe wrappers, get_effective_command leaves their quoted argument intact, so
+# any dangerous pattern inside is caught by the Tier 1 / Tier 2 rules directly.
 
 # Pipe-to-shell: output piped to an interpreter that reads stdin as code.
 # Matches a bare interpreter or one taking flags (e.g. `| bash -s`, `| sudo bash`,

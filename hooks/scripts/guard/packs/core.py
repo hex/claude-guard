@@ -239,8 +239,8 @@ register_tier2(
 
 # Separate -r -f flags
 register_tier2(
-    r"rm\s+(-[a-zA-Z]+\s+)*-[rR]\s+(-[a-zA-Z]+\s+)*-f|"
-    r"rm\s+(-[a-zA-Z]+\s+)*-f\s+(-[a-zA-Z]+\s+)*-[rR]",
+    r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f|"
+    r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]",
     "filesystem",
     "rm with separate -r -f flags is destructive.",
     "List the directory contents first, then ask the user to confirm deletion.",
@@ -447,10 +447,10 @@ register_allowlist(r'rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+"\$\{TMPDIR')
 register_allowlist(r'rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+"\$\{TMPDIR')
 
 # Separate flags on temp directories
-register_allowlist(r"rm\s+(-[a-zA-Z]+\s+)*-[rR]\s+(-[a-zA-Z]+\s+)*-f\s+/tmp/")
-register_allowlist(r"rm\s+(-[a-zA-Z]+\s+)*-f\s+(-[a-zA-Z]+\s+)*-[rR]\s+/tmp/")
-register_allowlist(r"rm\s+(-[a-zA-Z]+\s+)*-[rR]\s+(-[a-zA-Z]+\s+)*-f\s+/var/tmp/")
-register_allowlist(r"rm\s+(-[a-zA-Z]+\s+)*-f\s+(-[a-zA-Z]+\s+)*-[rR]\s+/var/tmp/")
+register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+/tmp/")
+register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+/tmp/")
+register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+/var/tmp/")
+register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+/var/tmp/")
 register_allowlist(r"rm\s+.*--recursive.*--force\s+/tmp/")
 register_allowlist(r"rm\s+.*--force.*--recursive\s+/tmp/")
 register_allowlist(r"rm\s+.*--recursive.*--force\s+/var/tmp/")
@@ -463,5 +463,5 @@ register_allowlist(r"docker\s+system\s+prune\s+.*--dry-run")
 register_allowlist(r"kubectl\s+delete\s+.*--dry-run")
 
 # Database safe patterns (case-insensitive: SQL keywords vary in case)
-register_allowlist(r"(?i)DROP\s+TABLE\s+IF\s+EXISTS.*--.*test")
+register_allowlist(r"(?i)DROP\s+TABLE\s+IF\s+EXISTS\s+\w*test\w*")
 register_allowlist(r"(?i)CREATE\s+(?:OR\s+REPLACE\s+)?(?:TABLE|VIEW|INDEX)\s+.*DROP\s+(?:TABLE|VIEW|INDEX)\s+IF\s+EXISTS")

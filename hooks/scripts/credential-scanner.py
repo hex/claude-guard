@@ -4,7 +4,7 @@
 """
 Credential and SQL safety scanner for Claude Code.
 
-Scans files after Write/Edit/MultiEdit operations for:
+Scans files after Write/Edit/NotebookEdit operations for:
   - Hardcoded credentials (AWS keys, API tokens, private keys, etc.)
   - Destructive SQL statements (DROP, TRUNCATE, DELETE without WHERE)
 
@@ -30,7 +30,7 @@ def main():
     tool_name = input_data.get("tool_name", "")
 
     # Only process file-writing tools
-    if tool_name not in ("Write", "Edit", "MultiEdit"):
+    if tool_name not in ("Write", "Edit", "NotebookEdit"):
         sys.exit(0)
 
     tool_input = input_data.get("tool_input") or {}

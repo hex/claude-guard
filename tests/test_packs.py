@@ -404,5 +404,15 @@ class TestSupplyChainCoverage(unittest.TestCase):
         assert_allowed(self, "pip install -r requirements.txt")
 
 
+class TestSqlAllowlistPrecision(unittest.TestCase):
+    """The DROP TABLE test-table allowlist must not leak to production tables."""
+
+    def test_prod_table_with_test_comment_not_allowlisted(self):
+        assert_asks(self, 'psql -c "DROP TABLE IF EXISTS prod_users -- run in test env"')
+
+    def test_test_table_drop_allowed(self):
+        assert_allowed(self, 'psql -c "DROP TABLE IF EXISTS test_users"')
+
+
 if __name__ == "__main__":
     unittest.main()

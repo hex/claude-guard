@@ -272,7 +272,17 @@ class TestFalsePositiveSuppression(unittest.TestCase):
 
 
 class TestToolFiltering(unittest.TestCase):
-    """Only Write/Edit/MultiEdit tools should be scanned."""
+    """Only file-writing tools (Write, Edit, NotebookEdit) should be scanned."""
+
+    def test_notebook_edit_scanned(self):
+        f = tempfile.NamedTemporaryFile(mode="w", suffix=".ipynb", delete=False)
+        f.write('{"cells": [{"source": "AKIAIOSFODNN7EXAMPLE"}]}')
+        f.close()
+        try:
+            result = run_scanner("NotebookEdit", f.name)
+            self.assertIsNotNone(result, "NotebookEdit writes should be scanned")
+        finally:
+            os.unlink(f.name)
 
     def test_bash_tool_ignored(self):
         input_data = json.dumps({
