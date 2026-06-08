@@ -287,5 +287,51 @@ class TestNonBashTools(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
 
 
+class TestAllowlistShortCircuit(unittest.TestCase):
+    """An allowlisted segment must not shield a dangerous one chained after it."""
+
+    def test_allowlisted_prefix_then_rm_root(self):
+        assert_denied(self, "git clean -n && rm -rf /")
+
+    def test_unallowlisted_prefix_then_rm_root(self):
+        # Control: no allowlisted prefix. Proves chaining alone is already caught,
+        # so the bug is specifically the allowlist short-circuit.
+        assert_denied(self, "echo ok && rm -rf /")
+
+    def test_allowlisted_prefix_then_dd(self):
+        assert_denied(self, "git clean --dry-run; dd if=/dev/zero of=/dev/sda")
+
+    def test_force_with_lease_then_force(self):
+        assert_asks(self, "git push --force-with-lease origin main; git push --force origin main")
+
+    def test_chained_safe_allowed(self):
+        assert_allowed(self, "git clean -n && git status")
+
+    def test_chained_allowlisted_temp_then_safe_allowed(self):
+        assert_allowed(self, "rm -rf /tmp/build && echo done")
+
+
+class TestTempAllowlistAnchoring(unittest.TestCase):
+    """Temp-dir allowlist must not let extra targets or .. traversal escape."""
+
+    def test_temp_plus_system_path(self):
+        assert_asks(self, "rm -rf /tmp/ /etc")
+
+    def test_temp_parent_traversal(self):
+        assert_asks(self, "rm -rf /tmp/../../../etc")
+
+    def test_temp_build_allowed(self):
+        assert_allowed(self, "rm -rf /tmp/build")
+
+    def test_temp_glob_allowed(self):
+        assert_allowed(self, "rm -rf /tmp/mycache/*")
+
+    def test_var_tmp_allowed(self):
+        assert_allowed(self, "rm -rf /var/tmp/cache")
+
+    def test_tmpdir_var_allowed(self):
+        assert_allowed(self, "rm -rf $TMPDIR/build")
+
+
 if __name__ == "__main__":
     unittest.main()

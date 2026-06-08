@@ -432,29 +432,22 @@ register_allowlist(r"git\s+clean\s+--dry-run")
 register_allowlist(r"git\s+push\s+.*--force-with-lease")
 register_allowlist(r"git\s+push\s+.*--force-if-includes")
 
-# rm -rf on temp directories
-register_allowlist(r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/tmp/")
-register_allowlist(r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+/tmp/")
-register_allowlist(r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/var/tmp/")
-register_allowlist(r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+/var/tmp/")
-register_allowlist(r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+\$TMPDIR/")
-register_allowlist(r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+\$TMPDIR/")
-register_allowlist(r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+\$\{TMPDIR")
-register_allowlist(r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+\$\{TMPDIR")
-register_allowlist(r'rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+"\$TMPDIR/')
-register_allowlist(r'rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+"\$TMPDIR/')
-register_allowlist(r'rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+"\$\{TMPDIR')
-register_allowlist(r'rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+"\$\{TMPDIR')
-
-# Separate flags on temp directories
-register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+/tmp/")
-register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+/tmp/")
-register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+/var/tmp/")
-register_allowlist(r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+/var/tmp/")
-register_allowlist(r"rm\s+.*--recursive.*--force\s+/tmp/")
-register_allowlist(r"rm\s+.*--force.*--recursive\s+/tmp/")
-register_allowlist(r"rm\s+.*--recursive.*--force\s+/var/tmp/")
-register_allowlist(r"rm\s+.*--force.*--recursive\s+/var/tmp/")
+# rm -rf on a temp directory is allowed, but ONLY when a temp path is the sole
+# target of the statement (nothing rides along) and has no '..' escape out of the
+# temp dir. _TEMP_TAIL enforces both: reject '..', then require end-of-segment so
+# a second target like '/etc' cannot slip past on the same rm.
+_TEMP_DIR = r'(?:/tmp/|/var/tmp/|"?\$\{?TMPDIR\}?/?)'
+_TEMP_TAIL = r"(?!\S*\.\.)\S*\s*$"
+_RM_RECURSIVE_FORMS = (
+    r"-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*",
+    r"-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*",
+    r"(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f",
+    r"(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]",
+    r"--recursive\s+--force",
+    r"--force\s+--recursive",
+)
+for _flags in _RM_RECURSIVE_FORMS:
+    register_allowlist(rf"rm\s+(?:{_flags})\s+{_TEMP_DIR}{_TEMP_TAIL}")
 
 # Docker dry runs
 register_allowlist(r"docker\s+system\s+prune\s+.*--dry-run")
