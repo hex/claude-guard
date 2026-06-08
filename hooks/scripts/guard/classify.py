@@ -29,9 +29,14 @@ _EVAL_BRIDGE = re.compile(
     r'eval\s+'             # eval
 )
 
-# Pipe-to-shell: output piped to a shell interpreter
+# Pipe-to-shell: output piped to an interpreter that reads stdin as code.
+# Matches a bare interpreter or one taking flags (e.g. `| bash -s`, `| sudo bash`,
+# `| python3 -`). The negative lookahead lets a script-file argument through, so
+# `cat data | python3 process.py` (piping data into a script) is not flagged.
 _PIPE_TO_SHELL = re.compile(
-    r'\|\s*(?:bash|sh|zsh|dash)\s*(?:$|;|&&|\|\|)'
+    r'\|\s*(?:sudo\s+|doas\s+)?'
+    r'(?:bash|sh|zsh|dash|python3?|node|ruby|perl)'
+    r'\b(?!\s+[^\s|;&<>-])'
 )
 
 # Process substitution with network download: shell <(curl/wget ...)
