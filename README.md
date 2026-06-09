@@ -179,6 +179,22 @@ hooks/scripts/
 
 No other dependencies. All modules use Python's built-in `re` and `json` modules.
 
+## Scope and Limitations
+
+claude-guard is a **deterministic safety net for an AI coding agent's Bash commands and file writes**. It catches the destructive mistakes an agent is most likely to make, and every rule is readable Python you can audit. It is **not** a security sandbox and does not try to be one. It does not:
+
+- Guard non-Bash tools (MCP servers, editor/IDE actions, direct network/API clients).
+- Track data flow, so it cannot detect multi-step "read a secret, then send it" exfiltration.
+- Contain a determined or prompt-injected agent that already has shell access.
+
+For those threats, run the agent inside an OS-level boundary and let claude-guard work within it:
+
+- A container or VM with a restricted filesystem view and CPU/memory limits.
+- Least-privilege credentials — no production secrets in the agent's environment.
+- Network egress controls (allowlisted domains).
+
+The boundary limits blast radius for everything claude-guard can't see; claude-guard limits the worst in-shell mistakes inside that boundary.
+
 ## Coexistence
 
 This plugin coexists safely with any existing safety hooks in your `settings.json`. If both the plugin and existing hooks block the same command, the first deny stops execution — no conflicts.
