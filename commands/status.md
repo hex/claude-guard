@@ -35,6 +35,7 @@ Tier 1: Hard Deny (catastrophic, must run manually)
   - aws: N patterns
   - gcp: N patterns
   - github-cli: N patterns
+  - gitlab-cli: N patterns
   - dns: N patterns
 
 Tier 2: Deny + Redirect (safer alternative suggested)
@@ -51,6 +52,7 @@ Tier 2: Deny + Redirect (safer alternative suggested)
   - pulumi: N patterns
   - cdk: N patterns
   - github-cli: N patterns
+  - gitlab-cli: N patterns
   - dns: N patterns
 
 Tier 3: Warn (credential scanner)

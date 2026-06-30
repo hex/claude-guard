@@ -160,6 +160,67 @@ class TestCICD(unittest.TestCase):
     def test_gh_repo_list_allowed(self):
         assert_allowed(self, "gh repo list")
 
+    # GitLab CLI (glab)
+    def test_glab_repo_delete(self):
+        assert_denied(self, "glab repo delete my-group/my-repo")
+
+    def test_glab_release_delete(self):
+        assert_asks(self, "glab release delete v1.0.0")
+
+    def test_glab_variable_delete(self):
+        assert_asks(self, "glab variable delete MY_VAR")
+
+    def test_glab_repo_archive(self):
+        assert_asks(self, "glab repo archive my-group/my-repo")
+
+    def test_glab_token_revoke(self):
+        assert_asks(self, "glab token revoke 42")
+
+    def test_glab_ci_delete(self):
+        assert_asks(self, "glab ci delete 100")
+
+    def test_glab_ssh_key_delete(self):
+        assert_asks(self, "glab ssh-key delete 7")
+
+    def test_glab_gpg_key_delete(self):
+        assert_asks(self, "glab gpg-key delete 7")
+
+    def test_glab_deploy_key_delete(self):
+        assert_asks(self, "glab deploy-key delete 7")
+
+    def test_glab_mr_delete(self):
+        assert_asks(self, "glab mr delete 5")
+
+    def test_glab_issue_delete(self):
+        assert_asks(self, "glab issue delete 7")
+
+    def test_glab_work_items_delete(self):
+        assert_asks(self, "glab work-items delete 9")
+
+    def test_glab_repo_create_allowed(self):
+        assert_allowed(self, "glab repo create my-repo")
+
+    def test_glab_repo_list_allowed(self):
+        assert_allowed(self, "glab repo list")
+
+    def test_glab_mr_create_allowed(self):
+        assert_allowed(self, "glab mr create --title 'fix'")
+
+    def test_glab_mr_close_allowed(self):
+        assert_allowed(self, "glab mr close 5")
+
+    def test_glab_issue_close_allowed(self):
+        assert_allowed(self, "glab issue close 7")
+
+    def test_glab_variable_set_allowed(self):
+        assert_allowed(self, "glab variable set MY_VAR x")
+
+    def test_glab_variable_list_allowed(self):
+        assert_allowed(self, "glab variable list")
+
+    def test_glab_release_create_allowed(self):
+        assert_allowed(self, "glab release create v1.0.0")
+
 
 # =============================================================================
 # DNS pack tests

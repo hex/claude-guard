@@ -6,7 +6,7 @@ Safety guardian plugin for Claude Code that prevents destructive commands, block
 
 ### Three-Tier Safety Model
 
-- **Tier 1 (Hard Deny)**: Catastrophic commands that must be run manually — `rm -rf /`, `dd` to block devices, `DROP DATABASE`, `kubectl delete namespace`, `aws s3 rb --force`, `gh repo delete`, Route53 `delete-hosted-zone`
+- **Tier 1 (Hard Deny)**: Catastrophic commands that must be run manually — `rm -rf /`, `dd` to block devices, `DROP DATABASE`, `kubectl delete namespace`, `aws s3 rb --force`, `gh repo delete`, `glab repo delete`, Route53 `delete-hosted-zone`
 - **Tier 2 (Deny + Redirect)**: Dangerous commands with a safer alternative — `git push --force` redirected to `--force-with-lease`, `rm -rf` requires listing contents first, `terraform destroy` requires `plan -destroy` first
 - **Tier 3 (Warn)**: Credential and secret detection in written files — AWS keys, API tokens, private keys, connection strings, JWT tokens, and destructive SQL patterns
 
@@ -26,6 +26,7 @@ Safety guardian plugin for Claude Code that prevents destructive commands, block
 | Terraform/IaC | | destroy, apply -destroy, apply -auto-approve, pulumi destroy, cdk destroy, helm uninstall, argocd/flux delete | |
 | Process/Service | | crontab -r, kill -1, systemctl stop/disable | |
 | GitHub CLI | gh repo delete | gh release delete, gh secret delete, gh extension install | |
+| GitLab CLI | glab repo delete | glab release/variable delete, glab repo archive, glab token revoke, glab ci delete, glab ssh-key/gpg-key/deploy-key delete, glab mr/issue/work-items delete | |
 | Supply chain | | pip install from URL/VCS | |
 | DNS | Route53 delete-hosted-zone | Route53 DELETE records, gcloud dns delete, az dns delete | |
 | Credentials | | | AWS, API keys, tokens, private keys, connection strings, JWT |
@@ -133,7 +134,7 @@ The plugin activates automatically — no configuration needed. Hooks intercept 
 | `guard/packs/core.py` | Pattern pack | Filesystem, git, docker, k8s, database patterns |
 | `guard/packs/cloud.py` | Pattern pack | AWS, GCP, Azure CLI patterns |
 | `guard/packs/infra.py` | Pattern pack | Terraform, Pulumi, CDK patterns |
-| `guard/packs/cicd.py` | Pattern pack | GitHub CLI patterns |
+| `guard/packs/cicd.py` | Pattern pack | GitHub/GitLab CLI patterns |
 | `guard/packs/dns.py` | Pattern pack | Route53, Cloud DNS, Azure DNS patterns |
 | `guard/packs/credentials.py` | Pattern pack | Credential and SQL detection patterns |
 | `guard/normalize.py` | Pipeline stage | Path stripping, whitespace collapse, env prefix removal |
@@ -168,7 +169,7 @@ hooks/scripts/
         ├── core.py          # T1/T2/allowlist (git, fs, docker, k8s, db)
         ├── cloud.py         # AWS, GCP, Azure CLI
         ├── infra.py         # Terraform, Pulumi, CDK
-        ├── cicd.py          # GitHub CLI
+        ├── cicd.py          # GitHub/GitLab CLI
         ├── dns.py           # Route53, Cloud DNS, Azure DNS
         └── credentials.py   # Credential detection
 ```

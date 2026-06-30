@@ -1,6 +1,6 @@
 ---
 name: Guard Rules
-description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, kubectl drain, terraform destroy, terraform apply -auto-approve, aws s3 rm, gh repo delete, find -delete, git history rewrites, crontab -r, systemctl stop, helm uninstall, pip install from a URL, Route53 delete, and credential exposure warnings after file writes.
+description: This skill should be used when a command is blocked by claude-guard, when the response contains "BLOCKED by claude-guard", when the user asks "why was my command blocked", "what commands are blocked", "guard rules", "safety rules", or when Claude is about to execute a potentially dangerous command. Covers git force push, git reset --hard, git checkout --, git clean, git commit --no-verify, rm -rf, chmod 777, DROP TABLE, TRUNCATE, DELETE without WHERE, docker system prune, docker compose down -v, kubectl delete, kubectl drain, terraform destroy, terraform apply -auto-approve, aws s3 rm, gh repo delete, glab repo delete, glab mr/issue/variable delete, find -delete, git history rewrites, crontab -r, systemctl stop, helm uninstall, pip install from a URL, Route53 delete, and credential exposure warnings after file writes.
 ---
 
 # Guard Rules
@@ -21,6 +21,7 @@ Catastrophic, irreversible commands that must never be executed by an AI agent. 
 - AWS catastrophe: `aws s3 rb --force`, `aws ec2 terminate-instances`, `aws rds delete-db-instance`, `aws rds delete-db-cluster`
 - GCP catastrophe: `gcloud projects delete`
 - GitHub CLI catastrophe: `gh repo delete`
+- GitLab CLI catastrophe: `glab repo delete`
 - DNS catastrophe: `aws route53 delete-hosted-zone`
 
 ### Tier 2: Confirm with User
@@ -125,6 +126,20 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | `gh release delete` | `gh release list` first |
 | `gh secret delete` | `gh secret list` first |
 | `gh extension install` | Review the extension source before installing |
+
+**GitLab CLI:**
+
+| Blocked Command | Safe Alternative |
+|---|---|
+| `glab release delete` | `glab release list` first |
+| `glab variable delete` | `glab variable list` first |
+| `glab repo archive` | Confirm intent; reversible via `glab repo unarchive` |
+| `glab token revoke` | `glab token list` first |
+| `glab ci delete` | `glab ci list` first |
+| `glab ssh-key delete` / `gpg-key delete` / `deploy-key delete` | `glab <key-type> list` first |
+| `glab mr delete` | Close instead: `glab mr close` |
+| `glab issue delete` | Close instead: `glab issue close` |
+| `glab work-items delete` | Confirm intent; deletion is irreversible (no close subcommand) |
 
 **Supply Chain:**
 
