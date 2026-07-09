@@ -81,6 +81,37 @@ class TestStringLiterals(unittest.TestCase):
         assert_allowed(self, 'MSG="git push --force"; echo "$MSG"')
 
 
+class TestSafeWrapperExpansion(unittest.TestCase):
+    """A command substitution inside a safe wrapper's double-quoted arg runs, so
+    it must not be blanked away as inert data. The inner command reaches the
+    tiers; because the substitution's ')' is its boundary, an rm lands on the
+    generic Tier 2 rm rule (confirm) rather than the exact Tier 1 target match —
+    either way it is no longer silently allowed."""
+
+    def test_echo_command_substitution(self):
+        assert_asks(self, 'echo "$(rm -rf ~)"')
+
+    def test_tee_command_substitution_root(self):
+        assert_asks(self, 'tee "$(rm -rf /)"')
+
+    def test_backtick_command_substitution(self):
+        assert_asks(self, 'echo "`rm -rf ~`"')
+
+    def test_printf_command_substitution_force_push(self):
+        assert_asks(self, 'printf "%s" "$(git push --force origin main)"')
+
+    def test_single_quoted_substitution_is_literal(self):
+        # Single quotes do not expand $(...) in bash — it stays literal data.
+        assert_allowed(self, "echo '$(rm -rf ~)'")
+
+    def test_grep_single_quoted_substitution_literal(self):
+        assert_allowed(self, "grep '$(rm -rf ~)' notes.txt")
+
+    def test_plain_variable_still_blanked(self):
+        # $VAR (no braces, no $()/backtick) is a simple expansion, still data.
+        assert_allowed(self, 'echo "$HOME/project"')
+
+
 class TestComments(unittest.TestCase):
     """Dangerous patterns in comments should be allowed."""
 
@@ -92,6 +123,14 @@ class TestComments(unittest.TestCase):
 
     def test_comment_drop_database(self):
         assert_allowed(self, '# DROP DATABASE production')
+
+    def test_parameter_length_not_comment(self):
+        # ${#var} is the parameter-length operator, not a comment: the '#' must
+        # not blank the dangerous statement that follows.
+        assert_denied(self, 'echo ${#PATH} && rm -rf /')
+
+    def test_array_length_not_comment(self):
+        assert_denied(self, 'echo ${#arr[@]}; rm -rf ~')
 
 
 class TestExecutionBridges(unittest.TestCase):

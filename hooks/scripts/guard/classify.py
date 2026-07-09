@@ -65,6 +65,16 @@ _LANG_DESTRUCTIVE = [
 ]
 
 
+# Shell expansions that run or interpolate at runtime. Inside double quotes,
+# command substitution `$( )` and backticks execute, and `${...}` interpolates —
+# so a double-quoted region containing one of these is not inert data.
+_EXPANSION = ('$(', '${', '`')
+
+
+def _has_expansion(text: str) -> bool:
+    return any(marker in text for marker in _EXPANSION)
+
+
 def find_quoted_regions(command: str) -> list[tuple[int, int, str]]:
     """Find all quoted regions in a command.
 
@@ -100,16 +110,29 @@ def find_quoted_regions(command: str) -> list[tuple[int, int, str]]:
 
 
 def find_comment_start(command: str, quoted: list[tuple[int, int, str]]) -> int | None:
-    """Find the position of unquoted # (comment start).
+    """Find the position of an unquoted # that starts a shell comment.
 
-    Returns the index of # or None if no comment found.
+    A '#' inside a ${...} parameter expansion (e.g. the length operator in
+    ${#PATH}) is not a comment, so ${...} spans are skipped. Returns the index
+    of the comment '#', or None if there is no comment.
     """
-    for i, ch in enumerate(command):
-        if ch == '#':
-            # Check if this # is inside any quoted region
-            in_quote = any(start <= i < end for start, end, _ in quoted)
-            if not in_quote:
+    def in_quote(i: int) -> bool:
+        return any(start <= i < end for start, end, _ in quoted)
+
+    depth = 0  # ${...} nesting depth
+    i = 0
+    n = len(command)
+    while i < n:
+        if not in_quote(i):
+            if command[i] == '$' and i + 1 < n and command[i + 1] == '{':
+                depth += 1
+                i += 2
+                continue
+            if command[i] == '}' and depth > 0:
+                depth -= 1
+            elif command[i] == '#' and depth == 0:
                 return i
+        i += 1
     return None
 
 
@@ -182,13 +205,19 @@ def get_effective_command(command: str) -> str:
     # Build list of regions to blank
     blank_regions = []
 
-    for start, end, _ in quoted:
+    for start, end, quote in quoted:
         # Skip quoted regions that are after a comment
         if comment_start is not None and start >= comment_start:
             continue
         # Only blank if this is an argument to a safe wrapper
-        if is_safe_wrapper_arg(command, start):
-            blank_regions.append((start, end))
+        if not is_safe_wrapper_arg(command, start):
+            continue
+        # A double-quoted region with a shell expansion runs or interpolates at
+        # runtime, so it is not inert data — leave it intact for the tier rules.
+        # Single quotes never expand, so they are still safe to blank.
+        if quote == '"' and _has_expansion(command[start:end]):
+            continue
+        blank_regions.append((start, end))
 
     # Blank comment region
     if comment_start is not None:
