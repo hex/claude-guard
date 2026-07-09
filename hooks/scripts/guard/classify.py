@@ -22,12 +22,17 @@ _DATA_FLAGS = {"-m", "--message", "--notes", "--body", "--title"}
 # not safe wrappers, get_effective_command leaves their quoted argument intact, so
 # any dangerous pattern inside is caught by the Tier 1 / Tier 2 rules directly.
 
+# A temporary environment-variable prefix, e.g. `FOO=1 BAR="a b" `, that bash
+# allows in front of the command it runs.
+_ENV_ASSIGN = r'(?:[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|\'[^\']*\'|\S*)\s+)*'
+
 # Pipe-to-shell: output piped to an interpreter that reads stdin as code.
 # Matches a bare interpreter or one taking flags (e.g. `| bash -s`, `| sudo bash`,
-# `| python3 -`). The negative lookahead lets a script-file argument through, so
-# `cat data | python3 process.py` (piping data into a script) is not flagged.
+# `| FOO=1 bash`, `| python3 -`). The negative lookahead lets a script-file
+# argument through, so `cat data | python3 process.py` (piping data into a
+# script) is not flagged.
 _PIPE_TO_SHELL = re.compile(
-    r'\|\s*(?:sudo\s+|doas\s+)?'
+    r'\|\s*(?:sudo\s+|doas\s+)?' + _ENV_ASSIGN +
     r'(?:bash|sh|zsh|dash|python3?|node|ruby|perl)'
     r'\b(?!\s+[^\s|;&<>-])'
 )
