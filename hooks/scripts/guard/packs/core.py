@@ -30,6 +30,17 @@ register_tier1(
     "rm -rf on home directory is CATASTROPHIC. This will NOT be executed.",
 )
 
+# rm -rf on a top-level system directory itself (e.g. /usr, /etc). Scoped to the
+# directory as the whole target — an optional single trailing slash then a word
+# boundary — so a deep path like /usr/local/build falls through to the Tier 2
+# rm rule (ask) rather than a hard deny.
+register_tier1(
+    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/(?:etc|usr|bin|sbin|var|lib|lib64|boot|root|sys)/?(?=\s|$)|"
+    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+/(?:etc|usr|bin|sbin|var|lib|lib64|boot|root|sys)/?(?=\s|$)",
+    "filesystem",
+    "rm -rf on a top-level system directory is CATASTROPHIC. This will NOT be executed.",
+)
+
 # Disk-level destruction
 register_tier1(
     r"dd\s+.*of=/dev/",
@@ -38,7 +49,7 @@ register_tier1(
 )
 
 register_tier1(
-    r"mkfs\.",
+    r"mkfs\.|mkfs\s+(?:-t\b|/dev/)",
     "disk",
     "mkfs formats a filesystem, destroying all data. This will NOT be executed.",
 )
@@ -47,6 +58,15 @@ register_tier1(
     r"fdisk\s+/dev/",
     "disk",
     "fdisk modifies disk partition tables. This will NOT be executed.",
+)
+
+# Whole-disk erase tools: wipe filesystem signatures or discard every block.
+register_tier1(
+    r"\bwipefs\s+(?:-\S+\s+)*(?:-a\b|--all\b|/dev/)|"
+    r"\bblkdiscard\s+(?:-\S+\s+)*/dev/|"
+    r"\bsgdisk\s+.*(?:--zap-all|--zap\b|-Z\b)",
+    "disk",
+    "Wiping filesystem signatures or discarding a block device destroys all data. This will NOT be executed.",
 )
 
 # Database catastrophe (case-insensitive: SQL keywords vary in case)

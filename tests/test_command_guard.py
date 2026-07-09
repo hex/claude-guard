@@ -72,6 +72,35 @@ class TestTier1HardDeny(unittest.TestCase):
     def test_mkfs(self):
         assert_denied(self, "mkfs.ext4 /dev/sda1")
 
+    def test_mkfs_dash_t(self):
+        assert_denied(self, "mkfs -t ext4 /dev/sdb")
+
+    def test_wipefs(self):
+        assert_denied(self, "wipefs -a /dev/sda")
+
+    def test_blkdiscard(self):
+        assert_denied(self, "blkdiscard /dev/nvme0n1")
+
+    def test_sgdisk_zap(self):
+        assert_denied(self, "sgdisk --zap-all /dev/sda")
+
+    def test_wipefs_in_filename_allowed(self):
+        assert_allowed(self, "cat wipefs-notes.txt")
+
+    def test_rm_rf_system_dir_usr(self):
+        assert_denied(self, "rm -rf /usr")
+
+    def test_rm_rf_system_dir_etc(self):
+        assert_denied(self, "rm -rf /etc")
+
+    def test_rm_rf_system_dir_trailing_slash(self):
+        assert_denied(self, "rm -rf /var/")
+
+    def test_rm_rf_system_subpath_only_asks(self):
+        # A deep path under a system dir is dangerous but not OS-destroying:
+        # Tier 1 is scoped to the top-level dir itself; deeper paths fall to ask.
+        assert_asks(self, "rm -rf /usr/local/mybuild")
+
     def test_fdisk(self):
         assert_denied(self, "fdisk /dev/sda")
 
@@ -320,7 +349,10 @@ class TestTempAllowlistAnchoring(unittest.TestCase):
     """Temp-dir allowlist must not let extra targets or .. traversal escape."""
 
     def test_temp_plus_system_path(self):
-        assert_asks(self, "rm -rf /tmp/ /etc")
+        # A second system-dir target rides past the temp allowlist. /etc is a
+        # top-level system directory, so this is a Tier 1 hard deny (stronger
+        # than the ask it would get for a non-system extra target).
+        assert_denied(self, "rm -rf /tmp/ /etc")
 
     def test_temp_parent_traversal(self):
         assert_asks(self, "rm -rf /tmp/../../../etc")
