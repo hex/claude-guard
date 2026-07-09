@@ -2,32 +2,52 @@
 # ABOUTME: Registers Tier 1 (hard deny), Tier 2 (deny+redirect), and allowlist patterns.
 from guard.packs import register_tier1, register_tier2, register_allowlist
 
+# Recursive-force rm flags in both orderings (-rf and -fr, tolerating extra flag
+# letters like -Rf or -rfv). Shared by the deny rules and the temp-dir allowlist
+# below so their flag grammars cannot drift apart.
+_RM_RF = r"-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*"
+_RM_FR = r"-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*"
+
+# System directories whose recursive deletion breaks the OS.
+_SYSTEM_DIRS = r"/(?:etc|usr|bin|sbin|var|lib|lib64|boot|root|sys)"
+
 # =============================================================================
 # Tier 1: Hard Deny — catastrophic, irreversible operations
 # =============================================================================
 
 # Filesystem catastrophe
 register_tier1(
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/\s|"
-    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+/\s|"
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/\*|"
-    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+/\*|"
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+/$",
+    rf"rm\s+{_RM_RF}\s+/\s|"
+    rf"rm\s+{_RM_FR}\s+/\s|"
+    rf"rm\s+{_RM_RF}\s+/\*|"
+    rf"rm\s+{_RM_FR}\s+/\*|"
+    rf"rm\s+{_RM_RF}\s+/$",
     "filesystem",
     "rm -rf on root filesystem is CATASTROPHIC. This will NOT be executed.",
 )
 
 register_tier1(
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+~/?\s|"
-    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+~/?\s|"
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+~/?\*|"
-    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+~/?\*|"
-    r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+~/?$|"
-    r"rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+~/?$|"
-    r'rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*\s+\$HOME/?|'
-    r'rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*\s+\$HOME/?',
+    rf"rm\s+{_RM_RF}\s+~/?\s|"
+    rf"rm\s+{_RM_FR}\s+~/?\s|"
+    rf"rm\s+{_RM_RF}\s+~/?\*|"
+    rf"rm\s+{_RM_FR}\s+~/?\*|"
+    rf"rm\s+{_RM_RF}\s+~/?$|"
+    rf"rm\s+{_RM_FR}\s+~/?$|"
+    rf"rm\s+{_RM_RF}\s+\$HOME/?|"
+    rf"rm\s+{_RM_FR}\s+\$HOME/?",
     "filesystem",
     "rm -rf on home directory is CATASTROPHIC. This will NOT be executed.",
+)
+
+# rm -rf on a top-level system directory itself (e.g. /usr, /etc). Scoped to the
+# directory as the whole target — an optional single trailing slash then a word
+# boundary — so a deep path like /usr/local/build falls through to the Tier 2
+# rm rule (ask) rather than a hard deny.
+register_tier1(
+    rf"rm\s+{_RM_RF}\s+{_SYSTEM_DIRS}/?(?=\s|$)|"
+    rf"rm\s+{_RM_FR}\s+{_SYSTEM_DIRS}/?(?=\s|$)",
+    "filesystem",
+    "rm -rf on a top-level system directory is CATASTROPHIC. This will NOT be executed.",
 )
 
 # Disk-level destruction
@@ -38,7 +58,7 @@ register_tier1(
 )
 
 register_tier1(
-    r"mkfs\.",
+    r"mkfs\.|mkfs\s+(?:-t\b|/dev/)",
     "disk",
     "mkfs formats a filesystem, destroying all data. This will NOT be executed.",
 )
@@ -47,6 +67,15 @@ register_tier1(
     r"fdisk\s+/dev/",
     "disk",
     "fdisk modifies disk partition tables. This will NOT be executed.",
+)
+
+# Whole-disk erase tools: wipe filesystem signatures or discard every block.
+register_tier1(
+    r"\bwipefs\s+(?:-\S+\s+)*(?:-a\b|--all\b|/dev/)|"
+    r"\bblkdiscard\s+(?:-\S+\s+)*/dev/|"
+    r"\bsgdisk\s+.*(?:--zap-all|--zap\b|-Z\b)",
+    "disk",
+    "Wiping filesystem signatures or discarding a block device destroys all data. This will NOT be executed.",
 )
 
 # Database catastrophe (case-insensitive: SQL keywords vary in case)
@@ -133,7 +162,7 @@ register_tier2(
 )
 
 register_tier2(
-    r"git\s+restore\s+(?!--staged\b)(?!-S\b)(?!.*--staged)",
+    r"git\s+restore\s+(?!-S\b)(?!.*--staged)",
     "git",
     "git restore discards uncommitted changes.",
     "Use 'git restore --staged' to unstage, or 'git stash' to save changes.",
@@ -330,7 +359,7 @@ register_tier2(
 
 # Permission escalation
 register_tier2(
-    r"chmod\s+777\b|chmod\s+-R\s+777\b|chmod\s+.*777\b",
+    r"chmod\s+.*777\b",
     "permissions",
     "chmod 777 makes files world-readable, writable, and executable.",
     "Use specific permissions: 755 for directories, 644 for files.",
@@ -439,8 +468,8 @@ register_allowlist(r"git\s+push\s+.*--force-if-includes")
 _TEMP_DIR = r'(?:/tmp/|/var/tmp/|"?\$\{?TMPDIR\}?/?)'
 _TEMP_TAIL = r"(?!\S*\.\.)\S*\s*$"
 _RM_RECURSIVE_FORMS = (
-    r"-[a-zA-Z]*[rR][a-zA-Z]*f[a-zA-Z]*",
-    r"-[a-zA-Z]*f[a-zA-Z]*[rR][a-zA-Z]*",
+    _RM_RF,
+    _RM_FR,
     r"(?:-[a-zA-Z]+\s+){0,6}-[rR]\s+(?:-[a-zA-Z]+\s+){0,6}-f",
     r"(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]",
     r"--recursive\s+--force",

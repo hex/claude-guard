@@ -5,53 +5,9 @@
 Tests the command guard by invoking it as a subprocess with JSON on stdin,
 exactly as Claude Code does. This exercises the real entry point and I/O path.
 """
-import json
-import os
-import subprocess
 import unittest
 
-GUARD_SCRIPT = os.path.join(
-    os.path.dirname(__file__), "..", "hooks", "scripts", "command-guard.py"
-)
-
-
-def run_guard(command: str) -> dict | None:
-    """Run command-guard.py with a Bash tool input and return parsed output."""
-    input_data = json.dumps({
-        "tool_name": "Bash",
-        "tool_input": {"command": command},
-    })
-    result = subprocess.run(
-        ["python3", GUARD_SCRIPT],
-        input=input_data,
-        capture_output=True,
-        text=True,
-    )
-    if result.stdout.strip():
-        return json.loads(result.stdout)
-    return None
-
-
-def assert_denied(test_case: unittest.TestCase, command: str, msg: str = ""):
-    """Assert the command is denied by the guard."""
-    output = run_guard(command)
-    test_case.assertIsNotNone(output, f"Expected deny for: {command}")
-    decision = output["hookSpecificOutput"]["permissionDecision"]
-    test_case.assertEqual(decision, "deny", f"Expected deny for: {command}. {msg}")
-
-
-def assert_asks(test_case: unittest.TestCase, command: str, msg: str = ""):
-    """Assert the command triggers a user confirmation prompt (Tier 2)."""
-    output = run_guard(command)
-    test_case.assertIsNotNone(output, f"Expected ask for: {command}")
-    decision = output["hookSpecificOutput"]["permissionDecision"]
-    test_case.assertEqual(decision, "ask", f"Expected ask for: {command}. {msg}")
-
-
-def assert_allowed(test_case: unittest.TestCase, command: str, msg: str = ""):
-    """Assert the command is allowed by the guard."""
-    output = run_guard(command)
-    test_case.assertIsNone(output, f"Expected allow for: {command}. Got: {output}. {msg}")
+from guard_harness import run_guard_raw, assert_denied, assert_asks, assert_allowed
 
 
 class TestTier1HardDeny(unittest.TestCase):
@@ -71,6 +27,35 @@ class TestTier1HardDeny(unittest.TestCase):
 
     def test_mkfs(self):
         assert_denied(self, "mkfs.ext4 /dev/sda1")
+
+    def test_mkfs_dash_t(self):
+        assert_denied(self, "mkfs -t ext4 /dev/sdb")
+
+    def test_wipefs(self):
+        assert_denied(self, "wipefs -a /dev/sda")
+
+    def test_blkdiscard(self):
+        assert_denied(self, "blkdiscard /dev/nvme0n1")
+
+    def test_sgdisk_zap(self):
+        assert_denied(self, "sgdisk --zap-all /dev/sda")
+
+    def test_wipefs_in_filename_allowed(self):
+        assert_allowed(self, "cat wipefs-notes.txt")
+
+    def test_rm_rf_system_dir_usr(self):
+        assert_denied(self, "rm -rf /usr")
+
+    def test_rm_rf_system_dir_etc(self):
+        assert_denied(self, "rm -rf /etc")
+
+    def test_rm_rf_system_dir_trailing_slash(self):
+        assert_denied(self, "rm -rf /var/")
+
+    def test_rm_rf_system_subpath_only_asks(self):
+        # A deep path under a system dir is dangerous but not OS-destroying:
+        # Tier 1 is scoped to the top-level dir itself; deeper paths fall to ask.
+        assert_asks(self, "rm -rf /usr/local/mybuild")
 
     def test_fdisk(self):
         assert_denied(self, "fdisk /dev/sda")
@@ -265,25 +250,14 @@ class TestNonBashTools(unittest.TestCase):
     """Non-Bash tool invocations should pass through without checking."""
 
     def test_write_tool_passes(self):
-        input_data = json.dumps({
+        result = run_guard_raw({
             "tool_name": "Write",
             "tool_input": {"file_path": "/tmp/test.txt", "content": "rm -rf /"},
         })
-        result = subprocess.run(
-            ["python3", GUARD_SCRIPT],
-            input=input_data,
-            capture_output=True,
-            text=True,
-        )
         self.assertEqual(result.stdout.strip(), "")
 
     def test_invalid_json_passes(self):
-        result = subprocess.run(
-            ["python3", GUARD_SCRIPT],
-            input="not json",
-            capture_output=True,
-            text=True,
-        )
+        result = run_guard_raw("not json")
         self.assertEqual(result.returncode, 0)
 
 
@@ -310,12 +284,20 @@ class TestAllowlistShortCircuit(unittest.TestCase):
     def test_chained_allowlisted_temp_then_safe_allowed(self):
         assert_allowed(self, "rm -rf /tmp/build && echo done")
 
+    def test_newline_allowlisted_then_force_push(self):
+        # Newline is a statement separator in bash: an allowlisted line must not
+        # shield a dangerous one on the next line.
+        assert_asks(self, "git clean -n\ngit push -f origin main")
+
 
 class TestTempAllowlistAnchoring(unittest.TestCase):
     """Temp-dir allowlist must not let extra targets or .. traversal escape."""
 
     def test_temp_plus_system_path(self):
-        assert_asks(self, "rm -rf /tmp/ /etc")
+        # A second system-dir target rides past the temp allowlist. /etc is a
+        # top-level system directory, so this is a Tier 1 hard deny (stronger
+        # than the ask it would get for a non-system extra target).
+        assert_denied(self, "rm -rf /tmp/ /etc")
 
     def test_temp_parent_traversal(self):
         assert_asks(self, "rm -rf /tmp/../../../etc")

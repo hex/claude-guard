@@ -5,56 +5,10 @@
 Tests new security packs by invoking command-guard.py as a subprocess,
 same as the existing test_command_guard.py tests.
 """
-import json
-import os
-import subprocess
 import unittest
 
-GUARD_SCRIPT = os.path.join(
-    os.path.dirname(__file__), "..", "hooks", "scripts", "command-guard.py"
-)
+from guard_harness import assert_denied, assert_asks, assert_allowed
 
-
-def run_guard(command: str) -> dict | None:
-    """Run command-guard.py with a Bash tool input and return parsed output."""
-    input_data = json.dumps({
-        "tool_name": "Bash",
-        "tool_input": {"command": command},
-    })
-    result = subprocess.run(
-        ["python3", GUARD_SCRIPT],
-        input=input_data,
-        capture_output=True,
-        text=True,
-    )
-    if result.stdout.strip():
-        return json.loads(result.stdout)
-    return None
-
-
-def assert_denied(tc, command, msg=""):
-    output = run_guard(command)
-    tc.assertIsNotNone(output, f"Expected deny for: {command}. {msg}")
-    decision = output["hookSpecificOutput"]["permissionDecision"]
-    tc.assertEqual(decision, "deny", f"Expected deny for: {command}. {msg}")
-
-
-def assert_asks(tc, command, msg=""):
-    """Assert the command triggers a user confirmation prompt (Tier 2)."""
-    output = run_guard(command)
-    tc.assertIsNotNone(output, f"Expected ask for: {command}. {msg}")
-    decision = output["hookSpecificOutput"]["permissionDecision"]
-    tc.assertEqual(decision, "ask", f"Expected ask for: {command}. {msg}")
-
-
-def assert_allowed(tc, command, msg=""):
-    output = run_guard(command)
-    tc.assertIsNone(output, f"Expected allow for: {command}. Got: {output}. {msg}")
-
-
-# =============================================================================
-# Cloud pack tests
-# =============================================================================
 
 class TestCloudAWS(unittest.TestCase):
     """AWS CLI destructive operations."""

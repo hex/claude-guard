@@ -65,6 +65,6 @@ Pipeline features:
   - Explain mode: set CLAUDE_GUARD_EXPLAIN=1 for pipeline trace on stderr
 ```
 
-If a category argument is provided (e.g., `/guard:status git`), show the detailed patterns for that category including the blocked command regex and the safe alternative.
+If a category argument is provided (e.g., `/claude-guard:status git`), show the detailed patterns for that category including the blocked command regex and the safe alternative.
 
 Count patterns by parsing the Python source files directly — do not hardcode counts.

@@ -1,5 +1,9 @@
 # ABOUTME: Context classification for shell commands.
 # ABOUTME: Distinguishes executed code from string literals, comments, and safe arguments.
+# Defer annotation evaluation so PEP 604 unions (int | None) do not raise at
+# import time on Python 3.9 — a guard that fails to import would fail OPEN.
+from __future__ import annotations
+
 import re
 
 # Variable assignment: VAR="value" — the quoted string is data, not code.
@@ -22,12 +26,17 @@ _DATA_FLAGS = {"-m", "--message", "--notes", "--body", "--title"}
 # not safe wrappers, get_effective_command leaves their quoted argument intact, so
 # any dangerous pattern inside is caught by the Tier 1 / Tier 2 rules directly.
 
+# A temporary environment-variable prefix, e.g. `FOO=1 BAR="a b" `, that bash
+# allows in front of the command it runs.
+_ENV_ASSIGN = r'(?:[A-Za-z_][A-Za-z0-9_]*=(?:"[^"]*"|\'[^\']*\'|\S*)\s+)*'
+
 # Pipe-to-shell: output piped to an interpreter that reads stdin as code.
 # Matches a bare interpreter or one taking flags (e.g. `| bash -s`, `| sudo bash`,
-# `| python3 -`). The negative lookahead lets a script-file argument through, so
-# `cat data | python3 process.py` (piping data into a script) is not flagged.
+# `| FOO=1 bash`, `| python3 -`). The negative lookahead lets a script-file
+# argument through, so `cat data | python3 process.py` (piping data into a
+# script) is not flagged.
 _PIPE_TO_SHELL = re.compile(
-    r'\|\s*(?:sudo\s+|doas\s+)?'
+    r'\|\s*(?:sudo\s+|doas\s+)?' + _ENV_ASSIGN +
     r'(?:bash|sh|zsh|dash|python3?|node|ruby|perl)'
     r'\b(?!\s+[^\s|;&<>-])'
 )
@@ -38,9 +47,11 @@ _PROCESS_SUB_DOWNLOAD = re.compile(
     r'(?:bash|sh|zsh|dash|source|\.)\s+<\(.*(?:curl|wget)\s'
 )
 
-# Inline interpreter patterns: python -c, ruby -e, perl -e, node -e
+# Inline interpreter patterns: python -c, ruby -e, perl -e, node -e, php -r.
+# Intervening flags are allowed (e.g. `python3 -I -c`, `ruby -w -e`) so a flag
+# between the interpreter and the inline-code switch cannot defeat the match.
 _INTERPRETER_BRIDGE = re.compile(
-    r'(?:python3?|python2|ruby|perl|node)\s+(?:-c|-e)\s+'
+    r'(?:python3?|python2|ruby|perl|node|php)\s+(?:-\S+\s+)*(?:-c|-e|-r)\s+'
 )
 
 # Language-specific destructive patterns (checked in bridge arguments)
@@ -56,6 +67,16 @@ _LANG_DESTRUCTIVE = [
     # PHP
     re.compile(r'unlink|rmdir|array_map.*unlink'),
 ]
+
+
+# Shell expansions that run or interpolate at runtime. Inside double quotes,
+# command substitution `$( )` and backticks execute, and `${...}` interpolates —
+# so a double-quoted region containing one of these is not inert data.
+_EXPANSION = ('$(', '${', '`')
+
+
+def _has_expansion(text: str) -> bool:
+    return any(marker in text for marker in _EXPANSION)
 
 
 def find_quoted_regions(command: str) -> list[tuple[int, int, str]]:
@@ -93,28 +114,30 @@ def find_quoted_regions(command: str) -> list[tuple[int, int, str]]:
 
 
 def find_comment_start(command: str, quoted: list[tuple[int, int, str]]) -> int | None:
-    """Find the position of unquoted # (comment start).
+    """Find the position of an unquoted # that starts a shell comment.
 
-    Returns the index of # or None if no comment found.
+    A '#' inside a ${...} parameter expansion (e.g. the length operator in
+    ${#PATH}) is not a comment, so ${...} spans are skipped. Returns the index
+    of the comment '#', or None if there is no comment.
     """
-    for i, ch in enumerate(command):
-        if ch == '#':
-            # Check if this # is inside any quoted region
-            in_quote = any(start <= i < end for start, end, _ in quoted)
-            if not in_quote:
+    def in_quote(i: int) -> bool:
+        return any(start <= i < end for start, end, _ in quoted)
+
+    depth = 0  # ${...} nesting depth
+    i = 0
+    n = len(command)
+    while i < n:
+        if not in_quote(i):
+            if command[i] == '$' and i + 1 < n and command[i + 1] == '{':
+                depth += 1
+                i += 2
+                continue
+            if command[i] == '}' and depth > 0:
+                depth -= 1
+            elif command[i] == '#' and depth == 0:
                 return i
+        i += 1
     return None
-
-
-def _preceding_word(command: str, pos: int) -> str:
-    """Get the word immediately before position pos, skipping whitespace."""
-    i = pos - 1
-    while i >= 0 and command[i] in ' \t':
-        i -= 1
-    end = i + 1
-    while i >= 0 and command[i] not in ' \t;|&':
-        i -= 1
-    return command[i + 1:end]
 
 
 def _preceding_context(command: str, pos: int) -> str:
@@ -175,13 +198,19 @@ def get_effective_command(command: str) -> str:
     # Build list of regions to blank
     blank_regions = []
 
-    for start, end, _ in quoted:
+    for start, end, quote in quoted:
         # Skip quoted regions that are after a comment
         if comment_start is not None and start >= comment_start:
             continue
         # Only blank if this is an argument to a safe wrapper
-        if is_safe_wrapper_arg(command, start):
-            blank_regions.append((start, end))
+        if not is_safe_wrapper_arg(command, start):
+            continue
+        # A double-quoted region with a shell expansion runs or interpolates at
+        # runtime, so it is not inert data — leave it intact for the tier rules.
+        # Single quotes never expand, so they are still safe to blank.
+        if quote == '"' and _has_expansion(command[start:end]):
+            continue
+        blank_regions.append((start, end))
 
     # Blank comment region
     if comment_start is not None:

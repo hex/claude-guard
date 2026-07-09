@@ -72,8 +72,8 @@ Set `CLAUDE_GUARD_EXPLAIN=1` to see the guard's decision pipeline on stderr:
 [normalize] No changes
 [bridge] No execution bridges detected
 [classify] Effective command unchanged (no safe regions blanked)
-[tier 2] Matched [git]: git\s+push\s+.*--force\b
-[result] DENY (Tier 2): Force push can overwrite remote history.
+[tier 2] Matched [git] in: git push --force origin main
+[result] ASK (Tier 2): Force push can destroy remote history.
 ```
 
 Useful for debugging false positives or understanding why a command was allowed/blocked.
@@ -113,15 +113,15 @@ The plugin activates automatically — no configuration needed. Hooks intercept 
 ### Check Status
 
 ```
-/guard:status           # Show all active protections
-/guard:status git       # Show git-specific patterns
-/guard:status docker    # Show docker-specific patterns
+/claude-guard:status           # Show all active protections
+/claude-guard:status git       # Show git-specific patterns
+/claude-guard:status docker    # Show docker-specific patterns
 ```
 
 ### When Commands Are Blocked
 
 - **Tier 1**: The command cannot be executed by Claude. Run it manually if truly needed.
-- **Tier 2**: Claude will automatically use the suggested safer alternative.
+- **Tier 2**: You are asked to confirm the original command; the guard shows the risk and a safer alternative for you to choose. Claude does not run anything automatically.
 - **Tier 3**: A warning appears after file writes. Review and fix if credentials were exposed.
 
 ## Components
