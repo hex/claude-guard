@@ -31,9 +31,10 @@ from guard.explain import trace
 
 # Statement separators. The command is split on these so an allowlisted segment
 # (e.g. `git clean -n`) cannot shield a dangerous one chained after it
-# (e.g. `&& rm -rf /`). Pipes are not separators here — they are handled by the
+# (e.g. `&& rm -rf /`). Newlines terminate a statement in bash, so they split
+# here too. Pipes are not separators here — they are handled by the
 # execution-bridge check.
-_SEGMENT_SPLIT = re.compile(r'(?:&&|\|\||;)')
+_SEGMENT_SPLIT = re.compile(r'(?:&&|\|\||;|\n|\r)')
 
 
 def segments(text: str):

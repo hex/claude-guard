@@ -310,6 +310,11 @@ class TestAllowlistShortCircuit(unittest.TestCase):
     def test_chained_allowlisted_temp_then_safe_allowed(self):
         assert_allowed(self, "rm -rf /tmp/build && echo done")
 
+    def test_newline_allowlisted_then_force_push(self):
+        # Newline is a statement separator in bash: an allowlisted line must not
+        # shield a dangerous one on the next line.
+        assert_asks(self, "git clean -n\ngit push -f origin main")
+
 
 class TestTempAllowlistAnchoring(unittest.TestCase):
     """Temp-dir allowlist must not let extra targets or .. traversal escape."""
