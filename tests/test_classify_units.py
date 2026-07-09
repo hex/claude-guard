@@ -55,5 +55,20 @@ class TestFindCommentStart(unittest.TestCase):
         self.assertIsNone(find_comment_start(cmd, find_quoted_regions(cmd)))
 
 
+class TestImportSafety(unittest.TestCase):
+    """PEP 604 unions (int | None) are evaluated at import time and raise
+    TypeError on Python 3.9. If the guard's import crashes, the PreToolUse hook
+    exits non-zero with no deny decision and Claude Code runs the command
+    unguarded — a fail-OPEN. `from __future__ import annotations` defers the
+    annotations to strings so the module imports cleanly on 3.9."""
+
+    def test_union_annotations_are_deferred(self):
+        self.assertIsInstance(
+            find_comment_start.__annotations__["return"], str,
+            "classify.py annotations must be deferred (from __future__ import "
+            "annotations) so the guard does not fail open on Python 3.9",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,9 @@
 # ABOUTME: Context classification for shell commands.
 # ABOUTME: Distinguishes executed code from string literals, comments, and safe arguments.
+# Defer annotation evaluation so PEP 604 unions (int | None) do not raise at
+# import time on Python 3.9 — a guard that fails to import would fail OPEN.
+from __future__ import annotations
+
 import re
 
 # Variable assignment: VAR="value" — the quoted string is data, not code.
