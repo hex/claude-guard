@@ -134,6 +134,19 @@ class TestInlineScripts(unittest.TestCase):
     def test_node_e_unlink(self):
         assert_denied(self, "node -e \"require('fs').rmSync('/data', {recursive: true})\"")
 
+    def test_python_flag_before_c(self):
+        # Intervening interpreter flags must not defeat the inline-interpreter bridge.
+        assert_denied(self, "python3 -I -c \"import shutil; shutil.rmtree('/data')\"")
+
+    def test_ruby_flag_before_e(self):
+        assert_denied(self, "ruby -w -e \"FileUtils.rm_rf('/data')\"")
+
+    def test_php_r_unlink(self):
+        assert_denied(self, "php -r \"unlink('/important')\"")
+
+    def test_php_r_safe(self):
+        assert_allowed(self, "php -r \"echo 'hello';\"")
+
     def test_python_c_safe(self):
         assert_allowed(self, "python3 -c \"print('hello')\"")
 

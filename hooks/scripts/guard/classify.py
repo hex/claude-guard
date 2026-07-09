@@ -43,9 +43,11 @@ _PROCESS_SUB_DOWNLOAD = re.compile(
     r'(?:bash|sh|zsh|dash|source|\.)\s+<\(.*(?:curl|wget)\s'
 )
 
-# Inline interpreter patterns: python -c, ruby -e, perl -e, node -e
+# Inline interpreter patterns: python -c, ruby -e, perl -e, node -e, php -r.
+# Intervening flags are allowed (e.g. `python3 -I -c`, `ruby -w -e`) so a flag
+# between the interpreter and the inline-code switch cannot defeat the match.
 _INTERPRETER_BRIDGE = re.compile(
-    r'(?:python3?|python2|ruby|perl|node)\s+(?:-c|-e)\s+'
+    r'(?:python3?|python2|ruby|perl|node|php)\s+(?:-\S+\s+)*(?:-c|-e|-r)\s+'
 )
 
 # Language-specific destructive patterns (checked in bridge arguments)
