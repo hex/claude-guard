@@ -140,17 +140,6 @@ def find_comment_start(command: str, quoted: list[tuple[int, int, str]]) -> int 
     return None
 
 
-def _preceding_word(command: str, pos: int) -> str:
-    """Get the word immediately before position pos, skipping whitespace."""
-    i = pos - 1
-    while i >= 0 and command[i] in ' \t':
-        i -= 1
-    end = i + 1
-    while i >= 0 and command[i] not in ' \t;|&':
-        i -= 1
-    return command[i + 1:end]
-
-
 def _preceding_context(command: str, pos: int) -> str:
     """Get the text before position pos for context analysis."""
     return command[:pos].rstrip()
