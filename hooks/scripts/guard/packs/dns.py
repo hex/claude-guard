@@ -9,7 +9,7 @@ from guard.packs import register_tier1, register_tier2
 register_tier1(
     r"aws\s+route53\s+delete-hosted-zone",
     "dns",
-    "Deleting a Route53 hosted zone removes all DNS records. This will NOT be executed.",
+    "Deleting a Route53 hosted zone removes all DNS records.",
 )
 
 register_tier2(

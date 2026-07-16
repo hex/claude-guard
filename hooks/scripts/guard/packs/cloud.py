@@ -10,19 +10,19 @@ from guard.packs import register_tier1, register_tier2, register_allowlist
 register_tier1(
     r"aws\s+ec2\s+terminate-instances",
     "cloud",
-    "Terminating EC2 instances destroys them permanently. This will NOT be executed.",
+    "Terminating EC2 instances destroys them permanently.",
 )
 
 register_tier1(
     r"aws\s+rds\s+delete-db-cluster",
     "cloud",
-    "Deleting an RDS cluster destroys the database and all data. This will NOT be executed.",
+    "Deleting an RDS cluster destroys the database and all data.",
 )
 
 register_tier1(
     r"aws\s+rds\s+delete-db-instance",
     "cloud",
-    "Deleting an RDS instance destroys the database. This will NOT be executed.",
+    "Deleting an RDS instance destroys the database.",
 )
 
 # Tier 2: Destructive but recoverable AWS operations
@@ -65,7 +65,7 @@ register_allowlist(r"aws\s+s3\s+rm\s+.*--dryrun")
 register_tier1(
     r"gcloud\s+projects\s+delete",
     "cloud",
-    "Deleting a GCP project destroys all resources in it. This will NOT be executed.",
+    "Deleting a GCP project destroys all resources in it.",
 )
 
 # Tier 2: Destructive GCP operations

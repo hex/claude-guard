@@ -23,7 +23,7 @@ register_tier1(
     rf"rm\s+{_RM_FR}\s+/\*|"
     rf"rm\s+{_RM_RF}\s+/$",
     "filesystem",
-    "rm -rf on root filesystem is CATASTROPHIC. This will NOT be executed.",
+    "rm -rf on root filesystem is CATASTROPHIC.",
 )
 
 register_tier1(
@@ -36,7 +36,7 @@ register_tier1(
     rf"rm\s+{_RM_RF}\s+\$HOME/?|"
     rf"rm\s+{_RM_FR}\s+\$HOME/?",
     "filesystem",
-    "rm -rf on home directory is CATASTROPHIC. This will NOT be executed.",
+    "rm -rf on home directory is CATASTROPHIC.",
 )
 
 # rm -rf on a top-level system directory itself (e.g. /usr, /etc). Scoped to the
@@ -47,26 +47,26 @@ register_tier1(
     rf"rm\s+{_RM_RF}\s+{_SYSTEM_DIRS}/?(?=\s|$)|"
     rf"rm\s+{_RM_FR}\s+{_SYSTEM_DIRS}/?(?=\s|$)",
     "filesystem",
-    "rm -rf on a top-level system directory is CATASTROPHIC. This will NOT be executed.",
+    "rm -rf on a top-level system directory is CATASTROPHIC.",
 )
 
 # Disk-level destruction
 register_tier1(
     r"dd\s+.*of=/dev/",
     "disk",
-    "dd to a block device can destroy disk partitions. This will NOT be executed.",
+    "dd to a block device can destroy disk partitions.",
 )
 
 register_tier1(
     r"mkfs\.|mkfs\s+(?:-t\b|/dev/)",
     "disk",
-    "mkfs formats a filesystem, destroying all data. This will NOT be executed.",
+    "mkfs formats a filesystem, destroying all data.",
 )
 
 register_tier1(
     r"fdisk\s+/dev/",
     "disk",
-    "fdisk modifies disk partition tables. This will NOT be executed.",
+    "fdisk modifies disk partition tables.",
 )
 
 # Whole-disk erase tools: wipe filesystem signatures or discard every block.
@@ -75,20 +75,20 @@ register_tier1(
     r"\bblkdiscard\s+(?:-\S+\s+)*/dev/|"
     r"\bsgdisk\s+.*(?:--zap-all|--zap\b|-Z\b)",
     "disk",
-    "Wiping filesystem signatures or discarding a block device destroys all data. This will NOT be executed.",
+    "Wiping filesystem signatures or discarding a block device destroys all data.",
 )
 
 # Database catastrophe (case-insensitive: SQL keywords vary in case)
 register_tier1(
     r"(?i)DROP\s+DATABASE",
     "database",
-    "DROP DATABASE destroys an entire database. This will NOT be executed.",
+    "DROP DATABASE destroys an entire database.",
 )
 
 register_tier1(
     r"(?i)DROP\s+SCHEMA",
     "database",
-    "DROP SCHEMA destroys an entire schema. This will NOT be executed.",
+    "DROP SCHEMA destroys an entire schema.",
 )
 
 # Fork bomb / shell denial of service
@@ -97,20 +97,20 @@ register_tier1(
     r"fork\s+while\s+fork|"
     r"while\s+true\s*;\s*do\s+fork",
     "shell",
-    "Fork bomb / shell DoS detected. This will NOT be executed.",
+    "Fork bomb / shell DoS detected.",
 )
 
 # Kubernetes catastrophe
 register_tier1(
     r"kubectl\s+delete\s+namespace",
     "kubernetes",
-    "Deleting a Kubernetes namespace destroys all resources in it. This will NOT be executed.",
+    "Deleting a Kubernetes namespace destroys all resources in it.",
 )
 
 register_tier1(
     r"kubectl\s+delete\s+.*--all",
     "kubernetes",
-    "kubectl delete --all removes all resources of that type. This will NOT be executed.",
+    "kubectl delete --all removes all resources of that type.",
 )
 
 # =============================================================================
