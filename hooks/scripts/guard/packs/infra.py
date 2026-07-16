@@ -10,21 +10,21 @@ register_tier2(
     r"terraform\s+destroy",
     "infra",
     "terraform destroy removes all managed infrastructure.",
-    "Run 'terraform plan -destroy' first to preview what would be destroyed.",
+    "Run 'terraform plan -destroy' first to preview the destroy.",
 )
 
 register_tier2(
     r"terraform\s+apply\s+.*-destroy",
     "infra",
     "terraform apply -destroy removes all managed infrastructure.",
-    "Run 'terraform plan -destroy' first to preview what would be destroyed.",
+    "Run 'terraform plan -destroy' first to preview the destroy.",
 )
 
 register_tier2(
     r"terraform\s+apply\s+.*-auto-approve",
     "infra",
-    "terraform apply -auto-approve applies the plan with no confirmation prompt.",
-    "Run 'terraform plan' and review, then apply without -auto-approve to confirm interactively.",
+    "terraform apply -auto-approve applies with no confirmation.",
+    "Run 'terraform plan' first, then apply without -auto-approve.",
 )
 
 # =============================================================================
@@ -35,7 +35,7 @@ register_tier2(
     r"pulumi\s+destroy",
     "infra",
     "pulumi destroy removes all managed infrastructure.",
-    "Run 'pulumi preview --destroy' first to preview what would be destroyed.",
+    "Run 'pulumi stack' first to review what would be destroyed.",
 )
 
 # =============================================================================
@@ -45,7 +45,7 @@ register_tier2(
 register_tier2(
     r"cdk\s+destroy",
     "infra",
-    "cdk destroy removes all CloudFormation stacks and their resources.",
+    "cdk destroy removes all CloudFormation stacks and resources.",
     "Run 'cdk diff' first to review the current state.",
 )
 
@@ -56,14 +56,14 @@ register_tier2(
 register_tier2(
     r"helm\s+uninstall\b|helm\s+delete\b",
     "infra",
-    "helm uninstall removes a release and all its Kubernetes resources.",
-    "Run 'helm list' first to review, and 'helm get manifest' to see what would be removed.",
+    "helm uninstall removes a release and its Kubernetes resources.",
+    "Run 'helm list' and 'helm get manifest' first to review.",
 )
 
 register_tier2(
     r"argocd\s+app\s+delete\b",
     "infra",
-    "argocd app delete removes the application and its managed resources.",
+    "argocd app delete removes the app and its managed resources.",
     "Run 'argocd app get' first to review what is managed.",
 )
 

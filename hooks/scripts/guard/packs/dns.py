@@ -16,7 +16,7 @@ register_tier2(
     r'aws\s+route53\s+change-resource-record-sets\s+.*"DELETE"',
     "dns",
     "Deleting Route53 DNS records can break service resolution.",
-    "Run 'aws route53 list-resource-record-sets' first to review records.",
+    "Run 'aws route53 list-resource-record-sets' to review records.",
 )
 
 # =============================================================================
