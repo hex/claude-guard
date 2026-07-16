@@ -53,28 +53,19 @@ def warn(context: str) -> None:
     sys.exit(0)
 
 
-SEPARATOR = "\u2500" * 49
-
-
-def format_tier1(reason: str, command: str) -> str:
-    """Format a Tier 1 hard deny message."""
+def format_tier1(reason: str) -> str:
+    """Format a Tier 1 hard deny message. The harness shows the command itself."""
     return (
-        f"\U0001f534 BLOCKED by claude-guard (Tier 1: Hard Deny)\n\n"
-        f"Command: {command}\n\n"
-        f"{SEPARATOR}\n"
-        f"{reason}\n"
-        f"{SEPARATOR}\n\n"
-        f"This command must be run manually by the user if truly needed."
+        f"\U0001f534  claude-guard \u00b7 Tier 1 \u2014 blocked\n\n"
+        f"Risk:  {reason}\n\n"
+        f"Need it anyway? Run it yourself in a terminal."
     )
 
 
-def format_tier2(reason: str, alternative: str, command: str) -> str:
-    """Format a Tier 2 user confirmation prompt message."""
+def format_tier2(reason: str, alternative: str) -> str:
+    """Format a Tier 2 confirmation message. The harness shows the command itself."""
     return (
-        f"\U0001f6e1\ufe0f claude-guard (Tier 2: Confirm Dangerous Command)\n\n"
-        f"Command: {command}\n\n"
-        f"{SEPARATOR}\n"
-        f"{reason}\n"
-        f"{SEPARATOR}\n\n"
-        f"Alternative: {alternative}"
+        f"\U0001f6e1\ufe0f  claude-guard \u00b7 Tier 2 \u2014 confirm before running\n\n"
+        f"Risk:  {reason}\n"
+        f"Safer: {alternative}"
     )

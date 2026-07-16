@@ -48,7 +48,7 @@ class TestExplainDisabled(unittest.TestCase):
 
     def test_denied_command_shows_reason_on_stderr(self):
         _, stderr = run_guard("rm -rf /", explain=False)
-        self.assertIn("BLOCKED by claude-guard", stderr)
+        self.assertIn("claude-guard", stderr)
 
     def test_allowed_command_no_stderr(self):
         _, stderr = run_guard("git status", explain=False)

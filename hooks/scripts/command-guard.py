@@ -72,7 +72,7 @@ def main():
         is_dangerous, reason = bridge_result
         if is_dangerous:
             trace("bridge", f"Execution bridge detected: {reason}")
-            deny(format_tier1(reason, command))
+            deny(format_tier1(reason))
     else:
         trace("bridge", "No execution bridges detected")
 
@@ -91,7 +91,7 @@ def main():
         if any(pattern.search(form) for form in whole_forms):
             trace("tier 1", f"Matched [{category}]: {pattern.pattern}")
             trace("result", f"DENY (Tier 1): {reason}")
-            deny(format_tier1(reason, command))
+            deny(format_tier1(reason))
 
     # Phases 5-6: Tier 2 — evaluated per statement segment so an allowlisted
     # segment (e.g. `git clean -n`) cannot shield a dangerous one chained after
@@ -118,7 +118,7 @@ def main():
     if pending_ask is not None:
         reason, alternative = pending_ask
         trace("result", f"ASK (Tier 2): {reason}")
-        ask(format_tier2(reason, alternative, command))
+        ask(format_tier2(reason, alternative))
 
     # Allow all other commands
     trace("result", "ALLOW (no patterns matched)")
