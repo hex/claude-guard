@@ -103,6 +103,27 @@ class TestTier1Message(unittest.TestCase):
         self.assertIn("claude-guard", self.msg)
 
 
+class TestStringsAreConcise(unittest.TestCase):
+    """RISK/SAFER lines wrap on narrow terminals when the strings run long."""
+
+    LIMIT = 62
+
+    def test_reasons_within_limit(self):
+        from guard.packs import load_all, tier1_rules, tier2_rules
+        load_all()
+        reasons = [r for _, _, r in tier1_rules()]
+        reasons += [r for _, _, r, _ in tier2_rules()]
+        over = sorted((len(r), r) for r in reasons if len(r) > self.LIMIT)
+        self.assertEqual(over, [], f"{len(over)} reasons over {self.LIMIT}: {over}")
+
+    def test_alternatives_within_limit(self):
+        from guard.packs import load_all, tier2_rules
+        load_all()
+        alts = [a for _, _, _, a in tier2_rules()]
+        over = sorted((len(a), a) for a in alts if len(a) > self.LIMIT)
+        self.assertEqual(over, [], f"{len(over)} alternatives over {self.LIMIT}: {over}")
+
+
 class TestTier1ReasonsNotRedundant(unittest.TestCase):
     """The Tier 1 frame header already says the command is blocked, so the
     per-rule reason strings should not repeat 'This will NOT be executed.'"""

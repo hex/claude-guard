@@ -9,7 +9,7 @@ from guard.packs import register_tier1, register_tier2
 register_tier1(
     r"gh\s+repo\s+delete",
     "cicd",
-    "Deleting a GitHub repository is permanent and destroys all code, issues, and PRs.",
+    "Deleting a repo is permanent: destroys code, issues, and PRs.",
 )
 
 register_tier2(
@@ -29,6 +29,6 @@ register_tier2(
 register_tier2(
     r"gh\s+extension\s+install\b",
     "cicd",
-    "gh extension install runs third-party extension code on your machine.",
+    "gh extension install runs third-party code on your machine.",
     "Review the extension's source before installing.",
 )

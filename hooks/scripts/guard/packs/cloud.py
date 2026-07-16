@@ -30,7 +30,7 @@ register_tier2(
     r"aws\s+s3\s+rm\s+.*--recursive",
     "cloud",
     "aws s3 rm --recursive deletes all objects in the path.",
-    "Run 'aws s3 ls <path>' first to review, or add --dryrun to preview deletions.",
+    "Run 'aws s3 ls <path>' first, or add --dryrun to preview.",
 )
 
 register_tier2(
@@ -44,14 +44,14 @@ register_tier2(
     r"aws\s+s3api\s+delete-bucket\b",
     "cloud",
     "aws s3api delete-bucket deletes the bucket.",
-    "Run 'aws s3api list-objects --bucket <name>' first to confirm it is expendable.",
+    "Run 'aws s3api list-objects --bucket <name>' first to confirm.",
 )
 
 register_tier2(
     r"aws\s+dynamodb\s+delete-table\b",
     "cloud",
     "aws dynamodb delete-table destroys the table and all its data.",
-    "Run 'aws dynamodb describe-table' first and confirm with the user.",
+    "Run 'aws dynamodb describe-table' first, then confirm.",
 )
 
 # Allowlist: safe AWS operations
@@ -99,7 +99,7 @@ register_tier2(
     r"az\s+group\s+delete",
     "cloud",
     "Deleting a resource group destroys all resources in it.",
-    "Run 'az group show --name <name>' first to review, or add --dry-run.",
+    "Run 'az resource list -g <name>' first to review contents.",
 )
 
 register_tier2(

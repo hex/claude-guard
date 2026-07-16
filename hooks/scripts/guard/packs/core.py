@@ -75,7 +75,7 @@ register_tier1(
     r"\bblkdiscard\s+(?:-\S+\s+)*/dev/|"
     r"\bsgdisk\s+.*(?:--zap-all|--zap\b|-Z\b)",
     "disk",
-    "Wiping filesystem signatures or discarding a block device destroys all data.",
+    "Wiping disk signatures or discarding a device destroys data.",
 )
 
 # Database catastrophe (case-insensitive: SQL keywords vary in case)
@@ -122,14 +122,14 @@ register_tier2(
     r"git\s+push\s+.*--force(?![-a-z])",
     "git",
     "Force push can destroy remote history.",
-    "Use --force-with-lease instead: it fails if someone else pushed.",
+    "Use --force-with-lease: it fails if someone else pushed.",
 )
 
 register_tier2(
     r"git\s+push\s+.*-f\b",
     "git",
     "Force push (-f) can destroy remote history.",
-    "Use --force-with-lease instead: it fails if someone else pushed.",
+    "Use --force-with-lease: it fails if someone else pushed.",
 )
 
 # Git discard changes
@@ -151,13 +151,13 @@ register_tier2(
     r"git\s+checkout\s+--\s+\.",
     "git",
     "git checkout -- . discards all uncommitted changes.",
-    "Use 'git stash' to save changes, or 'git diff' to review first.",
+    "Use 'git stash' to save, or 'git diff' to review first.",
 )
 
 register_tier2(
     r"git\s+checkout\s+--\s+",
     "git",
-    "git checkout -- <path> discards uncommitted changes to that path.",
+    "git checkout -- <path> discards uncommitted changes to it.",
     "Use 'git stash' first, or 'git diff <path>' to review changes.",
 )
 
@@ -165,7 +165,7 @@ register_tier2(
     r"git\s+restore\s+(?!-S\b)(?!.*--staged)",
     "git",
     "git restore discards uncommitted changes.",
-    "Use 'git restore --staged' to unstage, or 'git stash' to save changes.",
+    "Use 'git restore --staged' to unstage, or 'git stash' to save.",
 )
 
 # Git clean
@@ -173,15 +173,15 @@ register_tier2(
     r"git\s+clean\s+-[a-z]*f",
     "git",
     "git clean -f removes untracked files permanently.",
-    "Run 'git clean -n' first (dry run) to see what would be removed.",
+    "Run 'git clean -n' first (dry run) to preview removals.",
 )
 
 # Git branch force delete
 register_tier2(
     r"git\s+branch\s+-D\b",
     "git",
-    "git branch -D force-deletes without checking if the branch is merged.",
-    "Use 'git branch -d' instead: it only deletes if the branch is merged.",
+    "git branch -D deletes without checking if it's merged.",
+    "Use 'git branch -d': it only deletes if merged.",
 )
 
 # Git stash loss
@@ -218,8 +218,8 @@ register_tier2(
 register_tier2(
     r"git\s+checkout\s+\.(?:/|\s|$)",
     "git",
-    "git checkout . discards all uncommitted changes in the working tree.",
-    "Use 'git stash' to save changes, or 'git diff' to review first.",
+    "git checkout . discards uncommitted changes in the tree.",
+    "Use 'git stash' to save, or 'git diff' to review first.",
 )
 
 # Git history rewriting and ref destruction
@@ -227,14 +227,14 @@ register_tier2(
     r"git\s+filter-branch\b",
     "git",
     "git filter-branch rewrites the entire repository history.",
-    "Confirm the rewrite is intended and work on a backup clone first.",
+    "Confirm the rewrite is intended; work on a backup clone first.",
 )
 
 register_tier2(
     r"git\s+reflog\s+expire\b",
     "git",
-    "git reflog expire discards the reflog that makes recent operations recoverable.",
-    "Avoid expiring the reflog unless you intend to make recent operations unrecoverable.",
+    "git reflog expire discards entries that recover recent work.",
+    "Avoid expiring the reflog unless work should be unrecoverable.",
 )
 
 register_tier2(
@@ -247,7 +247,7 @@ register_tier2(
 register_tier2(
     r"git\s+update-ref\s+-d\b",
     "git",
-    "git update-ref -d deletes a ref directly, bypassing branch-delete safety.",
+    "git update-ref -d bypasses branch-delete merge safety checks.",
     "Use 'git branch -d' so merge status is checked first.",
 )
 
@@ -263,7 +263,7 @@ register_tier2(
     r"rm\s+-[a-zA-Z]*[rR][a-zA-Z]*f|rm\s+-[a-zA-Z]*f[a-zA-Z]*[rR]",
     "filesystem",
     "rm -rf is destructive and irreversible.",
-    "List the directory contents first, then ask the user to confirm deletion.",
+    "List the directory contents first, then confirm deletion.",
 )
 
 # Separate -r -f flags
@@ -272,7 +272,7 @@ register_tier2(
     r"rm\s+(?:-[a-zA-Z]+\s+){0,6}-f\s+(?:-[a-zA-Z]+\s+){0,6}-[rR]",
     "filesystem",
     "rm with separate -r -f flags is destructive.",
-    "List the directory contents first, then ask the user to confirm deletion.",
+    "List the directory contents first, then confirm deletion.",
 )
 
 # Long-form rm options
@@ -280,15 +280,15 @@ register_tier2(
     r"rm\s+.*--recursive.*--force|rm\s+.*--force.*--recursive",
     "filesystem",
     "rm --recursive --force is destructive.",
-    "List the directory contents first, then ask the user to confirm deletion.",
+    "List the directory contents first, then confirm deletion.",
 )
 
 # Docker destructive operations
 register_tier2(
     r"docker\s+system\s+prune",
     "docker",
-    "docker system prune removes unused containers, networks, images, and optionally volumes.",
-    "Run 'docker system prune --dry-run' first to see what would be removed.",
+    "docker system prune removes unused containers and images.",
+    "Review 'docker ps -a' and 'docker images' first, then confirm.",
 )
 
 register_tier2(
@@ -302,14 +302,14 @@ register_tier2(
     r"docker\s+volume\s+rm",
     "docker",
     "docker volume rm permanently deletes volume data.",
-    "Run 'docker volume ls' first to review, and confirm with the user.",
+    "Run 'docker volume ls' first, then confirm with the user.",
 )
 
 register_tier2(
     r"docker\s+network\s+rm",
     "docker",
-    "docker network rm removes a network and disconnects containers.",
-    "Run 'docker network ls' first to review, and confirm with the user.",
+    "docker network rm deletes the network configuration.",
+    "Run 'docker network ls' first, then confirm with the user.",
 )
 
 register_tier2(
@@ -322,7 +322,7 @@ register_tier2(
 register_tier2(
     r"docker\s+rmi\s+-f|docker\s+rmi\s+--force",
     "docker",
-    "docker rmi -f force-removes images even if containers use them.",
+    "docker rmi -f removes images even if containers use them.",
     "Use 'docker rmi' without --force for safe removal.",
 )
 
@@ -331,7 +331,7 @@ register_tier2(
     r"mv\s+\S+\s+/dev/null",
     "filesystem",
     "Moving files or directories to /dev/null destroys them.",
-    "Use 'rm' with confirmation, or move to a backup location instead.",
+    "Use 'rm' with confirmation, or move to a backup location.",
 )
 
 # Bulk delete via find (no rm token to match the rm rules above)
@@ -339,14 +339,14 @@ register_tier2(
     r"find\s+.*-delete\b",
     "filesystem",
     "find -delete recursively removes every matching file.",
-    "Run the find without -delete first to list what would be removed.",
+    "Run the find without -delete first to list matches.",
 )
 
 register_tier2(
     r"find\s+.*-exec\s+rm\b",
     "filesystem",
     "find -exec rm deletes every matching file.",
-    "Run the find without -exec first to list what would be removed.",
+    "Run the find without -exec first to list matches.",
 )
 
 # Unrecoverable file destruction
@@ -361,7 +361,7 @@ register_tier2(
 register_tier2(
     r"chmod\s+.*777\b",
     "permissions",
-    "chmod 777 makes files world-readable, writable, and executable.",
+    "chmod 777 makes files world-readable, writable, executable.",
     "Use specific permissions: 755 for directories, 644 for files.",
 )
 
@@ -370,21 +370,21 @@ register_tier2(
     r"(?i)DROP\s+TABLE",
     "database",
     "DROP TABLE permanently removes a table and its data.",
-    "Add IF EXISTS and confirm the table name with the user first.",
+    "Back up the table first and confirm the name with the user.",
 )
 
 register_tier2(
     r"(?i)TRUNCATE\s+",
     "database",
     "TRUNCATE removes all rows from a table.",
-    "Use DELETE with a WHERE clause for targeted removal, or confirm with the user.",
+    "Use DELETE with a WHERE clause, or confirm with the user.",
 )
 
 register_tier2(
     r"(?i)DELETE\s+FROM\s+\w+\s*(?:;|$)",
     "database",
     "DELETE FROM without WHERE removes all rows.",
-    "Add a WHERE clause, or confirm with the user that all rows should be deleted.",
+    "Add a WHERE clause, or confirm all rows should be deleted.",
 )
 
 # Kubernetes dangerous operations
@@ -392,14 +392,14 @@ register_tier2(
     r"kubectl\s+delete\s+(?!namespace\b)(?!--all\b)",
     "kubernetes",
     "kubectl delete removes Kubernetes resources.",
-    "Use 'kubectl delete --dry-run=client' first to preview, and confirm with the user.",
+    "Use --dry-run=client to preview, then confirm with the user.",
 )
 
 register_tier2(
     r"kubectl\s+drain\b",
     "kubernetes",
     "kubectl drain evicts all pods from a node.",
-    "Run 'kubectl get pods --field-selector spec.nodeName=<node>' first to review impact.",
+    "Run 'kubectl get pods -A -o wide' first to see node's pods.",
 )
 
 # =============================================================================
@@ -410,21 +410,21 @@ register_tier2(
     r"crontab\s+-r\b",
     "scheduler",
     "crontab -r deletes ALL cron jobs with no confirmation.",
-    "Run 'crontab -l' first to review, and back it up before removing.",
+    "Run 'crontab -l' first and back it up before removing.",
 )
 
 register_tier2(
     r"\bkill\s+(?:-\S+\s+)?-1\b",
     "process",
-    "kill -1 signals every process you own, ending the session.",
+    "kill with PID -1 signals every process you own.",
     "Target a specific PID instead of -1.",
 )
 
 register_tier2(
     r"systemctl\s+(?:stop|disable)\b",
     "service",
-    "systemctl stop/disable takes a service down or prevents it starting at boot.",
-    "Confirm the service and environment; use 'systemctl status' to inspect first.",
+    "systemctl stop/disable stops a service or blocks it at boot.",
+    "Confirm the service and env; run 'systemctl status' first.",
 )
 
 # Recursive chmod/chown on a system path (project-relative paths are allowed)
@@ -432,7 +432,7 @@ register_tier2(
     r"(?:chmod|chown)\s+-R\b.*\s/(?:etc|usr|bin|sbin|var|lib|lib64|boot|root|sys)(?:/|\s|$)|"
     r"(?:chmod|chown)\s+-R\b[^/]*\s/(?:\s|$)",
     "permissions",
-    "Recursive chmod/chown on a system path can break the operating system.",
+    "Recursive chmod/chown on a system path can break the OS.",
     "Scope the recursion to a project directory, not a system path.",
 )
 
@@ -443,7 +443,7 @@ register_tier2(
 register_tier2(
     r"\bpip3?\s+install\s+(?:--?\S+\s+)*(?:https?://|git\+)",
     "supply-chain",
-    "pip install from a URL or VCS runs setup code from an untrusted source.",
+    "pip install from a URL or VCS runs untrusted setup code.",
     "Install from PyPI by name, or vet and pin the source first.",
 )
 
