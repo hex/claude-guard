@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "claude-guard",
-  "version": "2026.7.0",
+  "version": "2026.7.1",
   "description": "Safety guardian that prevents Claude Code from executing dangerous commands, exposing secrets, and performing destructive operations",
   "author": {
     "name": "hex",

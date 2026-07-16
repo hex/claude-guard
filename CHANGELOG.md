@@ -4,6 +4,26 @@ All notable changes to claude-guard are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/); this project uses calendar-based
 versioning (`YYYY.M.BUILD`).
 
+## 2026.7.1
+
+Readability release for the confirmation prompt. No change to what the guard
+blocks — only how it explains itself.
+
+### Changed
+- Redesigned the Tier 1/Tier 2 message: dropped the duplicated command echo (the
+  host already shows it), replaced the boxed rules with a plain framed layout,
+  and switched to ALL-CAPS `RISK`/`SAFER` labels for hierarchy (no colour or bold
+  is available to a hook). Emoji stay on the title line to avoid width glitches.
+- Trimmed every per-rule `RISK`/`SAFER` string to ≤ 62 characters so lines stop
+  wrapping in the terminal.
+
+### Fixed
+- Corrected safer-alternative copy that recommended flags which do not exist
+  (`docker system prune --dry-run`, `az group … --dry-run`,
+  `pulumi preview --destroy`) or advice that was not actually safer (`DROP TABLE`
+  "add IF EXISTS", `kill -1` described as a signal rather than a PID,
+  `docker network rm` "disconnects"). Reasons and alternatives are now accurate.
+
 ## 2026.7.0
 
 Security-hardening release: closes 8 command-guard evasions found and empirically
