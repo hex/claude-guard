@@ -53,19 +53,28 @@ def warn(context: str) -> None:
     sys.exit(0)
 
 
+_RULE = "\u2500" * 50
+
+
 def format_tier1(reason: str) -> str:
     """Format a Tier 1 hard deny message. The harness shows the command itself."""
     return (
-        f"\U0001f534  claude-guard \u00b7 Tier 1 \u2014 blocked\n\n"
-        f"Risk:  {reason}\n\n"
-        f"Need it anyway? Run it yourself in a terminal."
+        f"\n"
+        f"\U0001f534  claude-guard \u00b7 Tier 1 \u2014 blocked\n"
+        f"{_RULE}\n"
+        f"RISK   {reason}\n"
+        f"Run it yourself in a terminal if you truly need it.\n"
+        f"{_RULE}\n"
     )
 
 
 def format_tier2(reason: str, alternative: str) -> str:
     """Format a Tier 2 confirmation message. The harness shows the command itself."""
     return (
-        f"\U0001f6e1\ufe0f  claude-guard \u00b7 Tier 2 \u2014 confirm before running\n\n"
-        f"Risk:  {reason}\n"
-        f"Safer: {alternative}"
+        f"\n"
+        f"\U0001f6e1\ufe0f  claude-guard \u00b7 Tier 2 \u2014 confirm\n"
+        f"{_RULE}\n"
+        f"RISK   {reason}\n"
+        f"SAFER  {alternative}\n"
+        f"{_RULE}\n"
     )
