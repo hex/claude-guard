@@ -160,6 +160,134 @@ class TestCICD(unittest.TestCase):
     def test_gh_repo_list_allowed(self):
         assert_allowed(self, "gh repo list")
 
+    # GitLab CLI (glab)
+    def test_glab_repo_delete(self):
+        assert_denied(self, "glab repo delete my-group/my-repo")
+
+    def test_glab_project_delete(self):
+        assert_denied(self, "glab project delete my-group/my-repo")
+
+    def test_glab_release_delete(self):
+        assert_asks(self, "glab release delete v1.0.0")
+
+    def test_glab_variable_delete(self):
+        assert_asks(self, "glab variable delete MY_VAR")
+
+    def test_glab_repo_update_archive(self):
+        assert_asks(self, "glab repo update my-group/my-repo --archive")
+
+    def test_glab_repo_update_archive_true(self):
+        assert_asks(self, "glab repo update my-group/my-repo --archive=true")
+
+    def test_glab_project_update_archive(self):
+        assert_asks(self, "glab project update my-group/my-repo --archive")
+
+    def test_glab_repo_update_unarchive_allowed(self):
+        assert_allowed(self, "glab repo update my-group/my-repo --archive=false")
+
+    def test_glab_repo_update_description_allowed(self):
+        assert_allowed(self, "glab repo update my-group/my-repo --description x")
+
+    def test_glab_repo_archive_download_allowed(self):
+        # `glab repo archive` downloads a zip of the repository; it does not archive the project.
+        assert_allowed(self, "glab repo archive my-group/my-repo")
+
+    def test_glab_token_revoke(self):
+        assert_asks(self, "glab token revoke 42")
+
+    def test_glab_ci_delete(self):
+        assert_asks(self, "glab ci delete 100")
+
+    def test_glab_ssh_key_delete(self):
+        assert_asks(self, "glab ssh-key delete 7")
+
+    def test_glab_gpg_key_delete(self):
+        assert_asks(self, "glab gpg-key delete 7")
+
+    def test_glab_deploy_key_delete(self):
+        assert_asks(self, "glab deploy-key delete 7")
+
+    def test_glab_deploy_token_delete(self):
+        assert_asks(self, "glab deploy-token delete 3")
+
+    def test_glab_deploy_token_del_alias(self):
+        assert_asks(self, "glab deploy-token del 3")
+
+    def test_glab_securefile_remove(self):
+        assert_asks(self, "glab securefile remove 4")
+
+    def test_glab_securefile_rm_alias(self):
+        assert_asks(self, "glab securefile rm --name cert.pem")
+
+    def test_glab_securefile_delete_alias(self):
+        assert_asks(self, "glab securefile delete 4")
+
+    def test_glab_securefile_list_allowed(self):
+        assert_allowed(self, "glab securefile list")
+
+    def test_glab_mr_delete(self):
+        assert_asks(self, "glab mr delete 5")
+
+    def test_glab_mr_del_alias(self):
+        assert_asks(self, "glab mr del 5")
+
+    def test_glab_issue_delete(self):
+        assert_asks(self, "glab issue delete 7")
+
+    def test_glab_issue_del_alias(self):
+        assert_asks(self, "glab issue del 7")
+
+    def test_glab_var_delete_alias(self):
+        assert_asks(self, "glab var delete MY_VAR")
+
+    def test_glab_variable_remove_alias(self):
+        assert_asks(self, "glab variable remove MY_VAR")
+
+    def test_glab_var_remove_alias(self):
+        assert_asks(self, "glab var remove MY_VAR")
+
+    def test_glab_token_rm_alias(self):
+        assert_asks(self, "glab token rm my-token")
+
+    def test_glab_pipe_delete_alias(self):
+        assert_asks(self, "glab pipe delete 100")
+
+    def test_glab_pipeline_delete_by_status(self):
+        assert_asks(self, "glab pipeline delete --status=failed")
+
+    def test_glab_var_list_allowed(self):
+        assert_allowed(self, "glab var list")
+
+    def test_glab_pipeline_list_allowed(self):
+        assert_allowed(self, "glab pipeline list")
+
+    def test_glab_work_items_delete(self):
+        assert_asks(self, "glab work-items delete 9")
+
+    def test_glab_repo_create_allowed(self):
+        assert_allowed(self, "glab repo create my-repo")
+
+    def test_glab_repo_list_allowed(self):
+        assert_allowed(self, "glab repo list")
+
+    def test_glab_mr_create_allowed(self):
+        assert_allowed(self, "glab mr create --title 'fix'")
+
+    def test_glab_mr_close_allowed(self):
+        assert_allowed(self, "glab mr close 5")
+
+    def test_glab_issue_close_allowed(self):
+        assert_allowed(self, "glab issue close 7")
+
+    def test_glab_variable_set_allowed(self):
+        assert_allowed(self, "glab variable set MY_VAR x")
+
+    def test_glab_variable_list_allowed(self):
+        assert_allowed(self, "glab variable list")
+
+    def test_glab_release_create_allowed(self):
+        assert_allowed(self, "glab release create v1.0.0")
+
 
 # =============================================================================
 # DNS pack tests
