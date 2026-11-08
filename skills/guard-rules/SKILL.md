@@ -132,14 +132,18 @@ Dangerous commands that have a safer alternative. The user is prompted for confi
 | Blocked Command | Safe Alternative |
 |---|---|
 | `glab release delete` | `glab release list` first |
-| `glab variable delete` | `glab variable list` first |
-| `glab repo archive` | Confirm intent; reversible via `glab repo unarchive` |
-| `glab token revoke` | `glab token list` first |
-| `glab ci delete` | `glab ci list` first |
+| `glab variable delete` (also `var`, `remove`) | `glab variable list` first |
+| `glab repo update --archive` | Confirm intent; reversible with `--archive=false` |
+| `glab token revoke` (also `rm`) | `glab token list` first |
+| `glab ci delete` (also `pipe`, `pipeline`) | `glab ci list` first |
 | `glab ssh-key delete` / `gpg-key delete` / `deploy-key delete` | `glab <key-type> list` first |
-| `glab mr delete` | Close instead: `glab mr close` |
-| `glab issue delete` | Close instead: `glab issue close` |
+| `glab deploy-token delete` | `glab deploy-token list` first |
+| `glab securefile remove` (also `rm`, `delete`) | `glab securefile list` first |
+| `glab mr delete` (also `del`) | Close instead: `glab mr close` |
+| `glab issue delete` (also `del`) | Close instead: `glab issue close` |
 | `glab work-items delete` | Confirm intent; deletion is irreversible (no close subcommand) |
+
+The `glab repo` rules also match its `glab project` alias, including the Tier 1 `glab project delete`.
 
 **Supply Chain:**
 

@@ -26,7 +26,7 @@ Safety guardian plugin for Claude Code that prevents destructive commands, block
 | Terraform/IaC | | destroy, apply -destroy, apply -auto-approve, pulumi destroy, cdk destroy, helm uninstall, argocd/flux delete | |
 | Process/Service | | crontab -r, kill -1, systemctl stop/disable | |
 | GitHub CLI | gh repo delete | gh release delete, gh secret delete, gh extension install | |
-| GitLab CLI | glab repo delete | glab release/variable delete, glab repo archive, glab token revoke, glab ci delete, glab ssh-key/gpg-key/deploy-key delete, glab mr/issue/work-items delete | |
+| GitLab CLI | glab repo/project delete | glab release/variable delete, glab repo update --archive, glab token revoke, glab ci delete, glab ssh-key/gpg-key/deploy-key delete, glab deploy-token delete, glab securefile remove, glab mr/issue/work-items delete | |
 | Supply chain | | pip install from URL/VCS | |
 | DNS | Route53 delete-hosted-zone | Route53 DELETE records, gcloud dns delete, az dns delete | |
 | Credentials | | | AWS, API keys, tokens, private keys, connection strings, JWT |
