@@ -1,5 +1,7 @@
 # claude-guard
 
+> **Archived.** claude-guard is no longer maintained. I switched to Claude Code's auto permission mode, which covers what this plugin was for. The last release is [v2026.11.0](https://github.com/hex/claude-guard/releases/tag/v2026.11.0).
+
 Safety guardian plugin for Claude Code that prevents destructive commands, blocks credential exposure, and redirects dangerous operations to safer alternatives.
 
 ## Features
