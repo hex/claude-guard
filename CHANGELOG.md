@@ -4,6 +4,20 @@ All notable changes to claude-guard are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/); this project uses calendar-based
 versioning (`YYYY.M.BUILD`).
 
+## 2026.11.0
+
+GitLab CLI (`glab`) coverage, from @gl-njanz in #1.
+
+### Added
+- Tier 1: `glab repo delete` and its `glab project delete` alias are hard-denied.
+- Tier 2 asks before release, variable, CI/CD pipeline, token, SSH/GPG/deploy key,
+  deploy token, secure file, MR, issue and work item deletes, and before
+  `glab repo update --archive`. The rules also match subcommand aliases (`var`,
+  `remove`, `rm`, `del`, `pipe`, `pipeline`).
+- `glab repo archive` downloads a zip and stays allowed.
+- README protection table, the guard-rules skill and `/claude-guard:status` list
+  the glab rules.
+
 ## 2026.7.1
 
 Readability release for the confirmation prompt. No change to what the guard
